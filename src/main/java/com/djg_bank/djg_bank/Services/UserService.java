@@ -13,6 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Service
 public class UserService {
 
@@ -45,13 +49,23 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("Ya existe un usuario con ese correo"), HttpStatus.BAD_REQUEST);
             }
 
+            // Validar el formato de fecha de nacimiento
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Define el formato de fecha esperado
+            Date parsedDate;
+            try {
+                parsedDate = dateFormat.parse(userDTO.getDate_of_birth());
+            } catch (ParseException e) {
+                return new ResponseEntity<>(new ErrorResponse("Formato de fecha de nacimiento no válido"), HttpStatus.BAD_REQUEST);
+            }
+
             // Hash de la contraseña
             String password = userDTO.getPassword();
             String passwordBcrypt = bcrypt.passwordEncoder().encode(password);
             userDTO.setPassword(passwordBcrypt);
 
             // Guardar el usuario
-            UserModel userModel = userMapper.toUSerModel(userDTO);
+            UserModel userModel = userMapper.toUserModel(userDTO);
+            userModel.setDate_of_birth(String.valueOf(parsedDate));
             UserModel savedUser = userRepository.save(userModel);
 
             return new ResponseEntity<>(userMapper.toUserDTO(savedUser), HttpStatus.CREATED);
@@ -67,7 +81,7 @@ public class UserService {
         return email.matches(regex);
     }
 
-    public ResponseEntity<?> Login(UserDTO userDTO) {
+    public ResponseEntity<?> login(UserDTO userDTO) {
         try {
             // Validación de datos
             if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword())) {

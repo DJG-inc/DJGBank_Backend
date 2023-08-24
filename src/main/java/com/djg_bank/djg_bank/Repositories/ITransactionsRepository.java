@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ITransactionsRepository extends JpaRepository<TransactionsModel, Long> {
-    TransactionsModel findByUser_Id(String user_id);
+    TransactionsModel findById(long id);
 }

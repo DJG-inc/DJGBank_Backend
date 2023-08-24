@@ -14,7 +14,7 @@ public class LoanModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "loan_amount", nullable = false)
+    @Column(name = "amount", nullable = false)
     private Double amount;
 
     @Column(name = "interest_rate", nullable = false)

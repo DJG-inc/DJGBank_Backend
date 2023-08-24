@@ -1,13 +1,17 @@
 package com.djg_bank.djg_bank.Models;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "users")
-@Data
 public class UserModel {
 
     @Id

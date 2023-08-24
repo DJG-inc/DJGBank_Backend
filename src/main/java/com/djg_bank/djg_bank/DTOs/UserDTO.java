@@ -1,24 +1,22 @@
 package com.djg_bank.djg_bank.DTOs;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @ToString
 public class UserDTO {
     private Long id;
     private String user_id;
-    private String first_Name;
-    private String last_Name;
+    private String first_name;
+    private String last_name;
     private String email;
     private String password;
-    private Date date_of_birth;
+    private String date_of_birth;
     private String address;
     private String phone_number;
 }
