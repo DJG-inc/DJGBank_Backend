@@ -29,4 +29,22 @@ public class UserController {
         return userService.login(userDTO);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> findById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        if (jwtUtils.validateJwtToken(token)) {
+            return userService.findById(id);
+        } else {
+            return ResponseEntity.badRequest().body("Token no válido");
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> findAll(@RequestHeader("Authorization") String token) {
+        if (jwtUtils.validateJwtToken(token)) {
+            return userService.findAll();
+        } else {
+            return ResponseEntity.badRequest().body("Token no válido");
+        }
+    }
+
 }
