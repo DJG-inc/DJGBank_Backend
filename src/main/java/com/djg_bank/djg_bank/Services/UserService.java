@@ -8,6 +8,7 @@ import com.djg_bank.djg_bank.Security.Bcrypt;
 import com.djg_bank.djg_bank.Security.JwtUtils;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import io.micrometer.common.util.StringUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,14 +50,9 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("Ya existe un usuario con ese correo"), HttpStatus.BAD_REQUEST);
             }
 
-            // Validar el formato de fecha de nacimiento
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Define el formato de fecha esperado
-            Date parsedDate;
-            try {
-                parsedDate = dateFormat.parse(userDTO.getDate_of_birth());
-            } catch (ParseException e) {
-                return new ResponseEntity<>(new ErrorResponse("Formato de fecha de nacimiento no válido"), HttpStatus.BAD_REQUEST);
-            }
+            // Parsear la fecha de nacimiento al formato esperado
+            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Formato de entrada
+            Date parsedDate = inputDateFormat.parse(userDTO.getDate_of_birth());
 
             // Hash de la contraseña
             String password = userDTO.getPassword();
@@ -127,6 +123,62 @@ public class UserService {
             return new ResponseEntity<>(this.userRepository.findAll(), HttpStatus.OK);
         } catch (Exception error) {
             return new ResponseEntity<>(new ErrorResponse("Error al obtener los usuarios"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    @Transactional
+    public ResponseEntity<?> updateUser(Long id, UserDTO updatedUserDTO) {
+        try {
+            // Verificar si el usuario existe
+            UserModel userToUpdate = this.userRepository.findById(id).orElse(null);
+            if (userToUpdate == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Actualizar todos los campos del usuario existente en función de los datos proporcionados en updatedUserDTO
+            if (updatedUserDTO.getEmail() != null) {
+                // Validar el formato de correo electrónico si es necesario
+                if (!isValidEmail(updatedUserDTO.getEmail())) {
+                    return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
+                }
+                userToUpdate.setEmail(updatedUserDTO.getEmail());
+            }
+
+            if (updatedUserDTO.getDate_of_birth() != null) {
+                // Validar el formato de fecha de nacimiento si es necesario
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                try {
+                    Date parsedDate = dateFormat.parse(updatedUserDTO.getDate_of_birth());
+                    userToUpdate.setDate_of_birth(String.valueOf(parsedDate));
+                } catch (ParseException e) {
+                    return new ResponseEntity<>(new ErrorResponse("Formato de fecha de nacimiento no válido"), HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Actualizar el resto de campos
+            userToUpdate.setUser_id(updatedUserDTO.getUser_id());
+            userToUpdate.setFirst_name(updatedUserDTO.getFirst_name());
+            userToUpdate.setLast_name(updatedUserDTO.getLast_name());
+            userToUpdate.setAddress(updatedUserDTO.getAddress());
+            userToUpdate.setPhone_number(updatedUserDTO.getPhone_number());
+
+
+            // Encriptar la contraseña si es necesario
+            String password = updatedUserDTO.getPassword();
+            if (StringUtils.isNotEmpty(password)) {
+                String passwordBcrypt = bcrypt.passwordEncoder().encode(password);
+                userToUpdate.setPassword(passwordBcrypt);
+            }
+
+            // Guardar los cambios en el usuario existente
+            UserModel updatedUser = userRepository.save(userToUpdate);
+
+            return new ResponseEntity<>(userMapper.toUserDTO(updatedUser), HttpStatus.OK);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al actualizar el usuario"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Error al actualizar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
 

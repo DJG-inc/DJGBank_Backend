@@ -21,30 +21,61 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
-        return userService.register(userDTO);
+        try {
+            return userService.register(userDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al registrar el usuario");
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
-        return userService.login(userDTO);
+        try {
+            return userService.login(userDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al iniciar sesión");
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        if (jwtUtils.validateJwtToken(token)) {
-            return userService.findById(id);
-        } else {
-            return ResponseEntity.badRequest().body("Token no válido");
+        try {
+            if (jwtUtils.validateJwtToken(token)) {
+                return userService.findById(id);
+            } else {
+                return ResponseEntity.badRequest().body("Token no válido");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener el usuario");
         }
     }
 
     @GetMapping("/all")
     public ResponseEntity<?> findAll(@RequestHeader("Authorization") String token) {
-        if (jwtUtils.validateJwtToken(token)) {
-            return userService.findAll();
-        } else {
-            return ResponseEntity.badRequest().body("Token no válido");
+        try {
+            if (jwtUtils.validateJwtToken(token)) {
+                return userService.findAll();
+            } else {
+                return ResponseEntity.badRequest().body("Token no válido");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener los usuarios");
         }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateUser(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody UserDTO updatedUserDTO) {
+        ResponseEntity<?> response;
+        try {
+            if (jwtUtils.validateJwtToken(token)) {
+                response = userService.updateUser(id, updatedUserDTO);
+            } else {
+                response = ResponseEntity.badRequest().body("Token no válido");
+            }
+        } catch (Exception e) {
+            response = ResponseEntity.badRequest().body("Error al actualizar el usuario");
+        }
+        return response;
     }
 
 }

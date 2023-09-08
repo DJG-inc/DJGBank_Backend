@@ -26,7 +26,7 @@ public class LoanModel {
     @Column(name = "start_date", nullable = false)
     private Date start_date;
 
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date", nullable = true)
     private Date end_date;
 
     @JsonIgnore
