@@ -50,9 +50,9 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("Ya existe un usuario con ese correo"), HttpStatus.BAD_REQUEST);
             }
 
-            // Parsear la fecha de nacimiento al formato esperado
+            // Parsear la fecha de nacimiento al formato deseado
             SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Formato de entrada
-            Date parsedDate = inputDateFormat.parse(userDTO.getDate_of_birth());
+            Date parsedDate = inputDateFormat.parse(userDTO.getDate_of_birth()); // Fecha de nacimiento parseada
 
             // Hash de la contraseña
             String password = userDTO.getPassword();
@@ -61,7 +61,7 @@ public class UserService {
 
             // Guardar el usuario
             UserModel userModel = userMapper.toUserModel(userDTO);
-            userModel.setDate_of_birth(String.valueOf(parsedDate));
+            userModel.setDate_of_birth(inputDateFormat.format(parsedDate)); // Formatear la fecha como "1/1/2000"
             UserModel savedUser = userRepository.save(userModel);
 
             return new ResponseEntity<>(userMapper.toUserDTO(savedUser), HttpStatus.CREATED);

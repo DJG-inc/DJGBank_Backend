@@ -16,6 +16,6 @@ public class LoanDTO {
     private Double amount;
     private Double interest_rate;
     private Double monthly_payment;
-    private Date start_date;
+    private String start_date;
     private Date end_date;
 }

@@ -24,7 +24,7 @@ public class LoanModel {
     private Double monthly_payment;
 
     @Column(name = "start_date", nullable = false)
-    private Date start_date;
+    private String start_date;
 
     @Column(name = "end_date", nullable = true)
     private Date end_date;
