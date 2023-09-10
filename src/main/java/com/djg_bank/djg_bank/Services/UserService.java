@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -36,18 +37,22 @@ public class UserService {
     public ResponseEntity<?> register(UserDTO userDTO) {
         try {
             // Validación de datos
-            if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword())) {
-                return new ResponseEntity<>(new ErrorResponse("Correo electrónico y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
+            if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword()) || StringUtils.isEmpty(userDTO.getUser_id())) {
+                return new ResponseEntity<>(new ErrorResponse("Correo electrónico, cédula y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
             }
 
             if (!isValidEmail(userDTO.getEmail())) {
                 return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
             }
 
+            if (!isValidUser_id(userDTO.getUser_id())) {
+                return new ResponseEntity<>(new ErrorResponse("Formato de cédula no válido"), HttpStatus.BAD_REQUEST);
+            }
+
             // Verificar si el correo ya está en uso
-            UserModel existingUser = userRepository.findByEmail(userDTO.getEmail());
+            UserModel existingUser = userRepository.findByUser_id(userDTO.getUser_id());
             if (existingUser != null) {
-                return new ResponseEntity<>(new ErrorResponse("Ya existe un usuario con ese correo"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ErrorResponse("El usuario ya existe"), HttpStatus.BAD_REQUEST);
             }
 
             // Parsear la fecha de nacimiento al formato deseado
@@ -71,28 +76,34 @@ public class UserService {
             return new ResponseEntity<>(new ErrorResponse("Error al registrar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
-    private boolean isValidEmail(String email) {
-        // Expresión regular para validar una dirección de correo electrónico básica.
-        String regex = "^[A-Za-z0-9+_.-]+@(.+)$";
-        return email.matches(regex);
-    }
 
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
+    private boolean isValidEmail(String email) {
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
+    private static final Pattern USERID_PATTERN = Pattern.compile("^[1-9][0-9]{7,9}$");
+    private boolean isValidUser_id(String user_id) {
+        if (user_id == null) {
+            return false;
+        }
+        return USERID_PATTERN.matcher(user_id).matches();
+    }
     public ResponseEntity<?> login(UserDTO userDTO) {
         try {
             // Validación de datos
-            if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword())) {
-                return new ResponseEntity<>(new ErrorResponse("Correo electrónico y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
+            if (StringUtils.isEmpty(userDTO.getUser_id()) || StringUtils.isEmpty(userDTO.getPassword())) {
+                return new ResponseEntity<>(new ErrorResponse("Cédula y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
             }
 
             // Verificar si el correo ya está en uso
-            UserModel existingUser = userRepository.findByEmail(userDTO.getEmail());
+            UserModel existingUser = userRepository.findByUser_id(userDTO.getUser_id());
             if (existingUser == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese correo"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ErrorResponse("Las credenciales proporcionadas son incorrectas. Por favor, inténtalo de nuevo."), HttpStatus.BAD_REQUEST);
             }
 
             // Verificar si la contraseña es correcta
             if (!bcrypt.passwordEncoder().matches(userDTO.getPassword(), existingUser.getPassword())) {
-                return new ResponseEntity<>(new ErrorResponse("Contraseña incorrecta"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ErrorResponse("Las credenciales proporcionadas son incorrectas. Por favor, inténtalo de nuevo."), HttpStatus.BAD_REQUEST);
             }
 
             // Generar el token por el id del usuario
@@ -104,7 +115,6 @@ public class UserService {
             return new ResponseEntity<>(new ErrorResponse("Error al iniciar sesión: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
-
     public ResponseEntity<?> findById(Long id) {
         try {
             UserModel user = this.userRepository.findById(id).orElse(null);
@@ -139,7 +149,7 @@ public class UserService {
             // Actualizar todos los campos del usuario existente en función de los datos proporcionados en updatedUserDTO
             if (updatedUserDTO.getEmail() != null) {
                 // Validar el formato de correo electrónico si es necesario
-                if (!isValidEmail(updatedUserDTO.getEmail())) {
+                if (isValidEmail(updatedUserDTO.getEmail())) {
                     return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
                 }
                 userToUpdate.setEmail(updatedUserDTO.getEmail());
@@ -157,7 +167,6 @@ public class UserService {
             }
 
             // Actualizar el resto de campos
-            userToUpdate.setUser_id(updatedUserDTO.getUser_id());
             userToUpdate.setFirst_name(updatedUserDTO.getFirst_name());
             userToUpdate.setLast_name(updatedUserDTO.getLast_name());
             userToUpdate.setAddress(updatedUserDTO.getAddress());
