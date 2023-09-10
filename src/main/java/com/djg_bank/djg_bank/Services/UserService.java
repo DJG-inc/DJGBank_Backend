@@ -6,6 +6,7 @@ import com.djg_bank.djg_bank.Models.UserModel;
 import com.djg_bank.djg_bank.Repositories.IUserRepository;
 import com.djg_bank.djg_bank.Security.Bcrypt;
 import com.djg_bank.djg_bank.Security.JwtUtils;
+import com.djg_bank.djg_bank.Utils.EmailService;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import io.micrometer.common.util.StringUtils;
 import jakarta.transaction.Transactional;
@@ -27,11 +28,14 @@ public class UserService {
     private final Bcrypt bcrypt;
     private final JwtUtils jwtUtils;
 
-    public UserService(IUserRepository userRepository, UserMapper userMapper, Bcrypt bcrypt, JwtUtils jwtUtils) {
+    private final EmailService emailService;
+
+    public UserService(IUserRepository userRepository, UserMapper userMapper, Bcrypt bcrypt, JwtUtils jwtUtils, EmailService emailService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.bcrypt = bcrypt;
         this.jwtUtils = jwtUtils;
+        this.emailService = emailService;
     }
 
     public ResponseEntity<?> register(UserDTO userDTO) {
@@ -69,6 +73,29 @@ public class UserService {
             userModel.setDate_of_birth(inputDateFormat.format(parsedDate)); // Formatear la fecha como "1/1/2000"
             UserModel savedUser = userRepository.save(userModel);
 
+            // Enviar correo electrónico de bienvenida
+            try {
+                String subject = "Bienvenido a DJG Bank";
+                String email_content =
+                        "<!DOCTYPE html>" +
+                                "<html>" +
+                                "<head>" +
+                                "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
+                                "</head>" +
+                                "<body>" +
+                                "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
+                                "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
+                                "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
+                                "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido " + savedUser.getFirst_name() + " " + savedUser.getLast_name() + ", nos alegra tenerte como cliente, juntos llegaremos lejos.</p>" +
+                                "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
+                                "    </div>" +
+                                "</body>" +
+                                "</html>";
+
+                emailService.sendEmail(savedUser.getEmail(), "Bienvenido a DJG Bank", email_content);
+            } catch (Exception e) {
+                return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de bienvenida"), HttpStatus.BAD_REQUEST);
+            }
             return new ResponseEntity<>(userMapper.toUserDTO(savedUser), HttpStatus.CREATED);
         } catch (DataIntegrityViolationException e) {
             return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al registrar el usuario"), HttpStatus.BAD_REQUEST);
