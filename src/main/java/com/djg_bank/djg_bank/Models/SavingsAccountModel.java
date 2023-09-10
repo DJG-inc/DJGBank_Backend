@@ -19,7 +19,7 @@ public class SavingsAccountModel {
     private Double balance;
 
     @Column(name = "created_at", nullable = false)
-    private Date created_at;
+    private String created_at;
 
     @Column(name = "interest_rate", nullable = false)
     private Double interest_rate;

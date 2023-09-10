@@ -1,6 +1,7 @@
 package com.djg_bank.djg_bank.Controllers;
 
 import com.djg_bank.djg_bank.DTOs.LoanDTO;
+import com.djg_bank.djg_bank.Security.JwtUtils;
 import com.djg_bank.djg_bank.Services.LoanService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,11 +12,14 @@ import org.springframework.web.bind.annotation.*;
 public class LoanController {
 
     private final LoanService loanService;
+    private final JwtUtils jwtUtils;
 
-    public LoanController(LoanService loanService) {
+    public LoanController(LoanService loanService, JwtUtils jwtUtils) {
         this.loanService = loanService;
+        this.jwtUtils = jwtUtils;
     }
 
+    //falta poner la verificacion del token
     @PostMapping("/create/{id}")
     public ResponseEntity<?> create(@PathVariable Long id, @RequestBody LoanDTO loanDTO) {
         try {

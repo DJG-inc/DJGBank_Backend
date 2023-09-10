@@ -15,6 +15,6 @@ import java.util.Date;
 public class SavingsAccountDTO {
     private Long id;
     private Double balance;
-    private Date created_at;
+    private String created_at;
     private Double interest_rate;
 }

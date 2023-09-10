@@ -88,4 +88,25 @@ public class LoanService {
         return age;
     }
 
+    public ResponseEntity<?> findAll() {
+        try {
+            return new ResponseEntity<>(this.loanRepository.findAll(), HttpStatus.OK);
+        } catch (Exception error) {
+            return new ResponseEntity<>(new ErrorResponse("Error al obtener los préstamos"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public ResponseEntity<?> findById(Long id) {
+        try {
+            LoanModel loan = this.loanRepository.findById(id).orElse(null);
+            if (loan == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un préstamo con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>(loan, HttpStatus.OK);
+        } catch (Exception error) {
+            return new ResponseEntity<>(new ErrorResponse("Error al obtener el préstamo"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
 }
