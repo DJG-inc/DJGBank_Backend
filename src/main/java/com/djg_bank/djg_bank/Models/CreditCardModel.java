@@ -2,12 +2,14 @@ package com.djg_bank.djg_bank.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "credit_card")
+@Data
 public class CreditCardModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,6 +17,9 @@ public class CreditCardModel {
 
     @Column(name = "card_number", nullable = false, length = 100)
     private String card_number;
+
+    @Column(name = "card_type", nullable = false, length = 100)
+    private String card_type;
 
     @Column(name = "expiry_date", nullable = false)
     private Date expiry_date;

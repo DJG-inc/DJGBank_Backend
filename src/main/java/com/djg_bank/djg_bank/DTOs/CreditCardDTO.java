@@ -14,6 +14,7 @@ import java.util.Date;
 public class CreditCardDTO {
     private Long id;
     private String card_number;
+    private String card_type;
     private Date expiry_date;
     private String cvv;
     private Date date_issued;
