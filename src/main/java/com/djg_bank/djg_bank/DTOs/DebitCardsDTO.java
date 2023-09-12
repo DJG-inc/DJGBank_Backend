@@ -12,7 +12,8 @@ import java.util.Date;
 @Builder
 @ToString
 public class DebitCardsDTO {
-    private Long card_id;
+    private Long id;
+    private String card_type;
     private String card_number;
     private Date expiry_date;
     private String cvv;

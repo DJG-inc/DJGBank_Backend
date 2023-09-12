@@ -6,6 +6,8 @@ import com.djg_bank.djg_bank.Services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -54,11 +56,7 @@ public class UserController {
     @GetMapping("/all")
     public ResponseEntity<?> findAll(@RequestHeader("Authorization") String token) {
         try {
-            if (jwtUtils.validateJwtToken(token)) {
-                return userService.findAll();
-            } else {
-                return ResponseEntity.badRequest().body("Token no válido");
-            }
+            return userService.findAll();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al obtener los usuarios");
         }
@@ -77,6 +75,26 @@ public class UserController {
             response = ResponseEntity.badRequest().body("Error al actualizar el usuario");
         }
         return response;
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> requestBody) {
+        try {
+            String email = requestBody.get("email");
+            return userService.forgotPassword(email);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al recuperar la contraseña");
+        }
+    }
+
+    @PostMapping("/reset-password/{token}")
+    public ResponseEntity<?> resetPassword(@PathVariable String token, @RequestBody Map<String, String> requestBody) {
+        try {
+            String password = requestBody.get("password");
+            return userService.resetPassword(token, password);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al resetear la contraseña");
+        }
     }
 
 }

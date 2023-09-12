@@ -21,8 +21,11 @@ public class DebitCardsModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_number", nullable = false, length = 16)
+    @Column(name = "card_number", nullable = false, length = 100)
     private String card_number;
+
+    @Column(name = "card_type", nullable = false, length = 100)
+    private String card_type;
 
     @Column(name = "expiry_date", nullable = false)
     private Date expiry_date;
