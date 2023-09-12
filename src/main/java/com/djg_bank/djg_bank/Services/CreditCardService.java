@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Random;
@@ -33,6 +34,21 @@ public class CreditCardService {
             UserModel user = this.userRepository.findById(id).orElse(null);
             if (user == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Obtener la fecha de nacimiento del usuario como String en el formato "1/1/2000"
+            String dateOfBirthString = user.getDate_of_birth();
+
+            // Parsear la fecha de nacimiento en el formato adecuado
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            Date dateOfBirth = dateFormat.parse(dateOfBirthString);
+
+            // Calcular la edad del usuario a partir de la fecha de nacimiento
+            int age = calcularEdad(dateOfBirth);
+
+            // Verificar que el usuario tenga al menos 18 años
+            if (age < 18) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario debe tener al menos 18 años para solicitar un préstamo"), HttpStatus.BAD_REQUEST);
             }
 
             // Validar el tipo de tarjeta (Visa o MasterCard)
@@ -141,5 +157,20 @@ public class CreditCardService {
         Random random = new Random();
         int cvv = random.nextInt(1000); // Número aleatorio de 0 a 999
         return String.format("%03d", cvv); // Formatear como cadena de tres dígitos
+    }
+
+    private int calcularEdad(Date dateOfBirth) {
+        Calendar dob = Calendar.getInstance();
+        dob.setTime(dateOfBirth);
+
+        Calendar currentDate = Calendar.getInstance();
+
+        int age = currentDate.get(Calendar.YEAR) - dob.get(Calendar.YEAR);
+
+        if (currentDate.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
+            age--;
+        }
+
+        return age;
     }
 }

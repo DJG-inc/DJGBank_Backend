@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "credit_card")
+@Table(name = "credit_cards")
 @Data
 public class CreditCardModel {
     @Id

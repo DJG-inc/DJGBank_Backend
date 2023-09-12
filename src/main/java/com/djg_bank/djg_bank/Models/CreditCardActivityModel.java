@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Entity
-@Table(name = "credit_card_activity")
+@Table(name = "credit_card_activities")
 @Data
 public class CreditCardActivityModel {
     @Id

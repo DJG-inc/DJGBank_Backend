@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Entity
-@Table(name = "loan")
+@Table(name = "loans")
 @Data
 public class LoanModel {
     @Id
