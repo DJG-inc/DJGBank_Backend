@@ -7,9 +7,9 @@ import java.util.List;
 
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "users")
 public class UserModel {

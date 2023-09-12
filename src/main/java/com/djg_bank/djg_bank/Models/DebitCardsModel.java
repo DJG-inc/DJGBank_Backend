@@ -2,14 +2,20 @@ package com.djg_bank.djg_bank.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "debit_cards")
-@Data
 public class DebitCardsModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
