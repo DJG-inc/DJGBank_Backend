@@ -31,6 +31,15 @@ public class UserController {
         }
     }
 
+    @PostMapping("/confirm-email/{token}")
+    public ResponseEntity<?> confirmEmail (@PathVariable String token) {
+        try {
+            return userService.confirmEmail(token);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al confirmar el email");
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
         try {
@@ -39,6 +48,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Error al iniciar sesión");
         }
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@RequestHeader("Authorization") String token, @PathVariable Long id) {

@@ -18,4 +18,5 @@ public class UserDTO {
     private String date_of_birth;
     private String address;
     private String phone_number;
+    private String status;
 }

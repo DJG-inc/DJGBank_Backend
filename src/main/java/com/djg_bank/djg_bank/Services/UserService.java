@@ -10,6 +10,7 @@ import com.djg_bank.djg_bank.Utils.EmailService;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import io.micrometer.common.util.StringUtils;
 import jakarta.transaction.Transactional;
+import org.apache.coyote.Response;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,33 +42,19 @@ public class UserService {
     public ResponseEntity<?> register(UserDTO userDTO) {
         try {
             // Validación de datos
-            if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword()) || StringUtils.isEmpty(userDTO.getUser_id())) {
-                return new ResponseEntity<>(new ErrorResponse("Correo electrónico, cédula y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
+            if (StringUtils.isEmpty(userDTO.getEmail()) || StringUtils.isEmpty(userDTO.getPassword())) {
+                return new ResponseEntity<>(new ErrorResponse("Correo electrónico y contraseña son obligatorios"), HttpStatus.BAD_REQUEST);
             }
 
             if (!isValidEmail(userDTO.getEmail())) {
                 return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
             }
 
-            if (!isValidUser_id(userDTO.getUser_id())) {
-                return new ResponseEntity<>(new ErrorResponse("Formato de cédula no válido"), HttpStatus.BAD_REQUEST);
-            }
-
             // Verificar si el usuario ya existe
-            UserModel existingUser = userRepository.findByUser_id(userDTO.getUser_id());
+            UserModel existingUser = userRepository.findByEmail(userDTO.getEmail());
             if (existingUser != null) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario ya existe"), HttpStatus.BAD_REQUEST);
             }
-
-            // Verificar si el correo ya está en uso
-            existingUser = userRepository.findByEmail(userDTO.getEmail());
-            if (existingUser != null) {
-                return new ResponseEntity<>(new ErrorResponse("El correo electrónico ya está en uso"), HttpStatus.BAD_REQUEST);
-            }
-
-            // Parsear la fecha de nacimiento al formato deseado
-            SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy"); // Formato de entrada
-            Date parsedDate = inputDateFormat.parse(userDTO.getDate_of_birth()); // Fecha de nacimiento parseada
 
             // Hash de la contraseña
             String password = userDTO.getPassword();
@@ -76,38 +63,44 @@ public class UserService {
 
             // Guardar el usuario
             UserModel userModel = userMapper.toUserModel(userDTO);
-            userModel.setDate_of_birth(inputDateFormat.format(parsedDate)); // Formatear la fecha como "1/1/2000"
+            userModel.setStatus("pending");
             UserModel savedUser = userRepository.save(userModel);
+
+            String token = jwtUtils.generateJwtToken(savedUser.getId());
 
             // Enviar correo electrónico de bienvenida
             try {
                 String subject = "Bienvenido a DJG Bank";
-                String email_content =
-                        "<!DOCTYPE html>" +
-                                "<html>" +
-                                "<head>" +
-                                "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
-                                "</head>" +
-                                "<body>" +
-                                "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
-                                "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
-                                "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido " + savedUser.getFirst_name() + " " + savedUser.getLast_name() + ", nos alegra tenerte como cliente, juntos llegaremos lejos.</p>" +
-                                "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
-                                "    </div>" +
-                                "</body>" +
-                                "</html>";
+                String email_content = getEmailContent(token);
 
-                emailService.sendEmail(savedUser.getEmail(), "Bienvenido a DJG Bank", email_content);
+                emailService.sendEmail(savedUser.getEmail(), subject, email_content);
             } catch (Exception e) {
-                return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de bienvenida"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
             }
+            System.out.println(token);
             return new ResponseEntity<>(userMapper.toUserDTO(savedUser), HttpStatus.CREATED);
-        } catch (DataIntegrityViolationException e) {
-            return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al registrar el usuario"), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorResponse("Error al registrar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private static String getEmailContent(String token) {
+        String confirmation_url = "http://localhost:4200/reset-password/" + token;
+        return "<!DOCTYPE html>" +
+                        "<html>" +
+                        "<head>" +
+                        "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
+                        "</head>" +
+                        "<body>" +
+                        "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
+                        "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
+                        "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
+                        "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido, nos alegra saber que estas con nosotros, ahora falta poco, porfavor confirma tu correo en el siguiente enlace:</p>" +
+                        "        <a href=\"" + confirmation_url + "\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Confirmar correo</a>" +
+                        "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
+                        "    </div>" +
+                        "</body>" +
+                        "</html>";
     }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
@@ -123,6 +116,62 @@ public class UserService {
             return false;
         }
         return USERID_PATTERN.matcher(user_id).matches();
+    }
+
+    public ResponseEntity<?> confirmEmail(String token) {
+        try {
+            // Validación de datos
+            if (StringUtils.isEmpty(token)) {
+                return new ResponseEntity<>(new ErrorResponse("Token es obligatorio"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Verificar si el token es válido
+            if (!jwtUtils.validateJwtToken(token)) {
+                return new ResponseEntity<>(new ErrorResponse("Token no válido"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Verificar si el usuario existe
+            Long userId = jwtUtils.getIdFromJwtToken(token);
+            UserModel userToUpdate = this.userRepository.findById(userId).orElse(null);
+            if (userToUpdate == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Actualizar el estado del usuario
+            userToUpdate.setStatus("confirmed");
+
+            // Guardar los cambios en el usuario existente
+            UserModel updatedUser = userRepository.save(userToUpdate);
+
+            //enviar correo de confirmacion
+            try {
+                String subject = "Bienvenido a DJG Bank";
+                String email_content =
+                        "<!DOCTYPE html>" +
+                                "<html>" +
+                                "<head>" +
+                                "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
+                                "</head>" +
+                                "<body>" +
+                                "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
+                                "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
+                                "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
+                                "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido, nos alegra tenerte con nosotros, lo que sigue ahora es terminar tu registro, porfavor ingresa a la siguiente dirección:</p>" +
+                                "        <a href=\"http://localhost:4200/login\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Iniciar sesión</a>" +
+                                "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
+                                "    </div>" +
+                                "</body>" +
+                                "</html>";
+
+                emailService.sendEmail(updatedUser.getEmail(), subject, email_content);
+            } catch (Exception e) {
+                return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Error al confirmar el correo electrónico: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(new ErrorResponse("Correo electrónico confirmado correctamente"), HttpStatus.OK);
     }
 
     public ResponseEntity<?> login(UserDTO userDTO) {

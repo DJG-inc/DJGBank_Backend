@@ -18,13 +18,13 @@ public class UserModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false, length = 100)
+    @Column(name = "user_id", nullable = true, length = 100)
     private String user_id;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "first_name", nullable = true, length = 100)
     private String first_name;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", nullable = true, length = 100)
     private String last_name;
 
     @Column(name = "email", nullable = false, length = 100)
@@ -33,17 +33,23 @@ public class UserModel {
     @Column(name = "password", nullable = false, length = 100)
     private String password;
 
-    @Column(name = "date_of_birth", nullable = false, length = 100)
+    @Column(name = "date_of_birth", nullable = true, length = 100)
     private String date_of_birth;
 
-    @Column(name = "address", nullable = false, length = 100)
+    @Column(name = "address", nullable = true, length = 100)
     private String address;
 
-    @Column(name = "phone_number", nullable = false, length = 100)
+    @Column(name = "phone_number", nullable = true, length = 100)
     private String phone_number;
+
+    @Column(name = "status", nullable = false, length = 100)
+    private String status = "pending";
 
     @Transient
     private String token;
+
+    @Transient
+    private String confirmation_token;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<LoanModel> loans;
