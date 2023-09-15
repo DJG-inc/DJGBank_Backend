@@ -10,7 +10,6 @@ import com.djg_bank.djg_bank.Utils.EmailService;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import io.micrometer.common.util.StringUtils;
 import jakarta.transaction.Transactional;
-import org.apache.coyote.Response;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,8 +70,7 @@ public class UserService {
             // Enviar correo electrónico de bienvenida
             try {
                 String subject = "Bienvenido a DJG Bank";
-                String email_content = getEmailContent(token);
-
+                String email_content = getConfirmContent(token);
                 emailService.sendEmail(savedUser.getEmail(), subject, email_content);
             } catch (Exception e) {
                 return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
@@ -84,7 +82,7 @@ public class UserService {
         }
     }
 
-    private static String getEmailContent(String token) {
+    private static String getConfirmContent(String token) {
         String confirmation_url = "http://localhost:4200/reset-password/" + token;
         return "<!DOCTYPE html>" +
                         "<html>" +
@@ -111,28 +109,10 @@ public class UserService {
 
     private static final Pattern USERID_PATTERN = Pattern.compile("^[1-9][0-9]{7,9}$");
 
-    private boolean isValidUser_id(String user_id) {
-        if (user_id == null) {
-            return false;
-        }
-        return USERID_PATTERN.matcher(user_id).matches();
-    }
-
-    public ResponseEntity<?> confirmEmail(String token) {
+    public ResponseEntity<?> confirmEmail(Long id) {
         try {
-            // Validación de datos
-            if (StringUtils.isEmpty(token)) {
-                return new ResponseEntity<>(new ErrorResponse("Token es obligatorio"), HttpStatus.BAD_REQUEST);
-            }
-
-            // Verificar si el token es válido
-            if (!jwtUtils.validateJwtToken(token)) {
-                return new ResponseEntity<>(new ErrorResponse("Token no válido"), HttpStatus.BAD_REQUEST);
-            }
-
             // Verificar si el usuario existe
-            Long userId = jwtUtils.getIdFromJwtToken(token);
-            UserModel userToUpdate = this.userRepository.findById(userId).orElse(null);
+            UserModel userToUpdate = this.userRepository.findById(id).orElse(null);
             if (userToUpdate == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
@@ -143,9 +123,9 @@ public class UserService {
             // Guardar los cambios en el usuario existente
             UserModel updatedUser = userRepository.save(userToUpdate);
 
-            //enviar correo de confirmacion
+//            Enviar correo de confirmacion
             try {
-                String subject = "Bienvenido a DJG Bank";
+                String subject = "Correo confirmado";
                 String email_content =
                         "<!DOCTYPE html>" +
                                 "<html>" +
@@ -164,15 +144,90 @@ public class UserService {
                                 "</html>";
 
                 emailService.sendEmail(updatedUser.getEmail(), subject, email_content);
+
             } catch (Exception e) {
                 return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
             }
+            return new ResponseEntity<>(userMapper.toUserDTO(updatedUser), HttpStatus.OK);
 
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al actualizar el usuario"), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return new ResponseEntity<>(new ErrorResponse("Error al confirmar el correo electrónico: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new ErrorResponse("Error al actualizar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(new ErrorResponse("Correo electrónico confirmado correctamente"), HttpStatus.OK);
     }
+
+    private boolean isValidUser_id(String user_id) {
+        if (user_id == null) {
+            return false;
+        }
+        return USERID_PATTERN.matcher(user_id).matches();
+    }
+    public ResponseEntity<?> completeRegister(Long id, UserDTO userDTO) {
+        try {
+            // Verificar si el usuario existe
+            UserModel userToUpdate = this.userRepository.findById(id).orElse(null);
+            if (userToUpdate == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            if (userToUpdate.getStatus().equals("valid")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario ya ha completado su registro"), HttpStatus.BAD_REQUEST);
+            }
+
+            if (userToUpdate.getStatus().equals("pending")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario no ha confirmado su correo electrónico"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Actualizar todos los campos del usuario existente en función de los datos proporcionados en updatedUserDTO
+            if (userDTO.getEmail() != null) {
+                // Validar el formato de correo electrónico si es necesario
+                if (isValidEmail(userDTO.getEmail())) {
+                    return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
+                }
+                userToUpdate.setEmail(userDTO.getEmail());
+            }
+
+            if (userDTO.getUser_id() != null) {
+                // Validar el formato de cédula si es necesario
+                if (!isValidUser_id(userDTO.getUser_id())) {
+                    return new ResponseEntity<>(new ErrorResponse("Formato de cédula no válido"), HttpStatus.BAD_REQUEST);
+                }
+                userToUpdate.setUser_id(userDTO.getUser_id());
+            }
+
+            if (userDTO.getDate_of_birth() != null) {
+                // Validar el formato de fecha de nacimiento si es necesario
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+                try {
+//                   Enviar fecha formateada como dd/MM/yyyy
+                    Date parsedDate = dateFormat.parse(userDTO.getDate_of_birth());
+                    userToUpdate.setDate_of_birth(dateFormat.format(parsedDate));
+                } catch (ParseException e) {
+                    return new ResponseEntity<>(new ErrorResponse("Formato de fecha de nacimiento no válido"), HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Actualizar el resto de campos
+            userToUpdate.setFirst_name(userDTO.getFirst_name());
+            userToUpdate.setLast_name(userDTO.getLast_name());
+            userToUpdate.setAddress(userDTO.getAddress());
+            userToUpdate.setPhone_number(userDTO.getPhone_number());
+            // Actualizar el estado del usuario
+            userToUpdate.setStatus("confirmed");
+
+            // Guardar los cambios en el usuario existente
+            UserModel updatedUser = userRepository.save(userToUpdate);
+
+            return new ResponseEntity<>(userMapper.toUserDTO(updatedUser), HttpStatus.OK);
+
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al actualizar el usuario"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Error al actualizar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
     public ResponseEntity<?> login(UserDTO userDTO) {
         try {
@@ -297,25 +352,7 @@ public class UserService {
             // Enviar correo electrónico de restablecimiento de contraseña
             try {
                 String subject = "Restablecer contraseña";
-                String email_content =
-                        "<!DOCTYPE html>" +
-                                "<html>" +
-                                "<head>" +
-                                "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
-                                "</head>" +
-                                "<body>" +
-                                "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
-                                "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
-                                "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has solicitado restablecer tu contraseña en DJG Bank <span style='color: #B6E72B;'>easy</span></h1>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>Hola " + existingUser.getFirst_name() + ",</p>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>Para restablecer tu contraseña, haz click en el siguiente enlace:</p>" +
-                                "        <a href=\"http://localhost:4200/reset-password/" + token + "\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Restablecer contraseña</a>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>Si no has solicitado restablecer tu contraseña, ignora este correo.</p>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>Saludos,</p>" +
-                                "        <p style='color: #ffffff; font-size: 20px;'>El equipo de DJG Bank</p>" +
-                                "    </div>" +
-                                "</body>" +
-                                "</html>";
+                String email_content = getResetContent(token);
 
                 emailService.sendEmail(existingUser.getEmail(), subject, email_content);
             } catch (Exception e) {
@@ -325,6 +362,25 @@ public class UserService {
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorResponse("Error al restablecer la contraseña: " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private static String getResetContent(String token) {
+        String reset_url = "http://localhost:4200/reset-password/" + token;
+        return "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
+                "</head>" +
+                "<body>" +
+                "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
+                "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
+                "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
+                "        <p style='color: #ffffff; font-size: 20px;'>Hemos recibido un intento de cambiar tu contraseña, si fuiste tu, porfavor confirma tu correo en el siguiente enlace:</p>" +
+                "        <a href=\"" + reset_url + "\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Cambia tu contraseña</a>" +
+                "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
+                "    </div>" +
+                "</body>" +
+                "</html>";
     }
 
     public ResponseEntity<?> resetPassword(String token, String password) {

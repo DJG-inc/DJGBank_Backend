@@ -21,7 +21,7 @@ public class CreditCardModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_number", nullable = false, length = 100)
+    @Column(name = "card_number", nullable = false, length = 16)
     private String card_number;
 
     @Column(name = "card_type", nullable = false, length = 100)

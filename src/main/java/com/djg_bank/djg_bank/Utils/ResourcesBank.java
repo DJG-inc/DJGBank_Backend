@@ -22,15 +22,20 @@ public class ResourcesBank {
         StringBuilder cardNumber = new StringBuilder();
         cardNumber.append(cardType.equalsIgnoreCase("Visa") ? "4" : "5"); // Prefijo para Visa o MasterCard
 
-        for (int i = 0; i < 15; i++) {
-            cardNumber.append(random.nextInt(10)); // Generar los 15 dígitos restantes
+        // Generar los 14 dígitos restantes (en lugar de 15)
+        for (int i = 0; i < 14; i++) {
+            cardNumber.append(random.nextInt(10)); // Generar los 14 dígitos restantes
         }
 
         // Aplicar el algoritmo de Luhn para generar el dígito de verificación
         cardNumber.append(generateLuhnDigit(cardNumber.toString()));
 
+        // Añadir un dígito adicional para asegurar que haya 16 dígitos
+        cardNumber.append(random.nextInt(10));
+
         return cardNumber.toString();
     }
+
 
     public int generateLuhnDigit(String cardNumber) {
         // Implementar el algoritmo de Luhn para generar el dígito de verificación

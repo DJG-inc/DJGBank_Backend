@@ -31,12 +31,21 @@ public class UserController {
         }
     }
 
-    @PostMapping("/confirm-email/{token}")
-    public ResponseEntity<?> confirmEmail (@PathVariable String token) {
+    @PostMapping("/confirm-email/{id}")
+    public ResponseEntity<?> confirmEmail (@PathVariable Long id) {
         try {
-            return userService.confirmEmail(token);
+            return userService.confirmEmail(id);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al confirmar el email");
+        }
+    }
+
+    @PostMapping("/complete-register/{id}")
+    public ResponseEntity<?> completeRegister(@PathVariable Long id, @RequestBody UserDTO updatedUserDTO){
+        try{
+            return userService.completeRegister(id, updatedUserDTO);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al completar el registor del usuario");
         }
     }
 
@@ -64,7 +73,7 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> findAll(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> findAll( String token) {
         try {
             return userService.findAll();
         } catch (Exception e) {
@@ -106,5 +115,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Error al resetear la contraseña");
         }
     }
+
+
 
 }
