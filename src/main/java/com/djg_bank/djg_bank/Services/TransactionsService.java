@@ -3,8 +3,10 @@ package com.djg_bank.djg_bank.Services;
 import com.djg_bank.djg_bank.DTOs.TransactionsDTO;
 import com.djg_bank.djg_bank.Mapper.TransactionsMapper;
 import com.djg_bank.djg_bank.Models.DebitCardsModel;
+import com.djg_bank.djg_bank.Models.SavingsAccountModel;
 import com.djg_bank.djg_bank.Models.TransactionsModel;
 import com.djg_bank.djg_bank.Repositories.IDebitCardsRepository;
+import com.djg_bank.djg_bank.Repositories.ISavingsAccountRepository;
 import com.djg_bank.djg_bank.Repositories.ITransactionsRepository;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import org.springframework.http.HttpStatus;
@@ -21,11 +23,13 @@ public class TransactionsService {
     private final TransactionsMapper transactionsMapper;
 
     private final IDebitCardsRepository debitCardsRepository;
+    private final ISavingsAccountRepository savingsAccountRepository;
 
-    public TransactionsService(ITransactionsRepository transactionsRepository, TransactionsMapper transactionsMapper, IDebitCardsRepository debitCardsRepository) {
+    public TransactionsService(ITransactionsRepository transactionsRepository, TransactionsMapper transactionsMapper, IDebitCardsRepository debitCardsRepository, ISavingsAccountRepository savingsAccountRepository) {
         this.transactionsRepository = transactionsRepository;
         this.transactionsMapper = transactionsMapper;
         this.debitCardsRepository = debitCardsRepository;
+        this.savingsAccountRepository = savingsAccountRepository;
     }
 
     public ResponseEntity<?> createTransaction(Long id, TransactionsDTO transactionsDTO) {
@@ -55,6 +59,11 @@ public class TransactionsService {
 
             // establecer el nuevo balance de la tarjeta
             debitCards.getSavings_account().setBalance(debitCards.getSavings_account().getBalance() - transactionsDTO.getAmount());
+
+            // restar el monto de la transaccion al balance de la cuenta de ahorros
+            SavingsAccountModel savingsAccountModel = debitCards.getSavings_account();
+            savingsAccountModel.setBalance(savingsAccountModel.getBalance() - transactionsDTO.getAmount());
+            this.savingsAccountRepository.save(savingsAccountModel);
 
             // Guardar la transaccion
             this.debitCardsRepository.save(debitCards);

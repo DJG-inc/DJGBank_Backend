@@ -38,6 +38,7 @@ public class UserService {
         this.emailService = emailService;
     }
 
+    @Transactional
     public ResponseEntity<?> register(UserDTO userDTO) {
         try {
             // Validación de datos
@@ -62,10 +63,11 @@ public class UserService {
 
             // Guardar el usuario
             UserModel userModel = userMapper.toUserModel(userDTO);
-            userModel.setStatus("pending");
+            userModel.setStatus("Pending");
             UserModel savedUser = userRepository.save(userModel);
 
             String token = jwtUtils.generateJwtToken(savedUser.getId());
+            savedUser.setToken(token);
 
             // Enviar correo electrónico de bienvenida
             try {
@@ -75,7 +77,6 @@ public class UserService {
             } catch (Exception e) {
                 return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
             }
-            System.out.println(token);
             return new ResponseEntity<>(userMapper.toUserDTO(savedUser), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorResponse("Error al registrar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -83,7 +84,7 @@ public class UserService {
     }
 
     private static String getConfirmContent(String token) {
-        String confirmation_url = "http://localhost:4200/reset-password/" + token;
+        String confirmation_url = "http://localhost:4200/confirm-email/" + token;
         return "<!DOCTYPE html>" +
                         "<html>" +
                         "<head>" +
@@ -109,16 +110,21 @@ public class UserService {
 
     private static final Pattern USERID_PATTERN = Pattern.compile("^[1-9][0-9]{7,9}$");
 
-    public ResponseEntity<?> confirmEmail(Long id) {
+    public ResponseEntity<?> confirmEmail(String token) {
         try {
             // Verificar si el usuario existe
-            UserModel userToUpdate = this.userRepository.findById(id).orElse(null);
+            Long userId = jwtUtils.getIdFromJwtToken(token);
+            UserModel userToUpdate = this.userRepository.findById(userId).orElse(null);
             if (userToUpdate == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
+            if (userToUpdate.getStatus().equals("Active")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario ya ha completado su registro"), HttpStatus.BAD_REQUEST);
+            }
+
             // Actualizar el estado del usuario
-            userToUpdate.setStatus("confirmed");
+            userToUpdate.setStatus("Confirmed");
 
             // Guardar los cambios en el usuario existente
             UserModel updatedUser = userRepository.save(userToUpdate);
@@ -163,6 +169,8 @@ public class UserService {
         }
         return USERID_PATTERN.matcher(user_id).matches();
     }
+
+    @Transactional
     public ResponseEntity<?> completeRegister(Long id, UserDTO userDTO) {
         try {
             // Verificar si el usuario existe
@@ -171,11 +179,11 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
-            if (userToUpdate.getStatus().equals("valid")) {
+            if (userToUpdate.getStatus().equals("Active")) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario ya ha completado su registro"), HttpStatus.BAD_REQUEST);
             }
 
-            if (userToUpdate.getStatus().equals("pending")) {
+            if (userToUpdate.getStatus().equals("Pending")) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario no ha confirmado su correo electrónico"), HttpStatus.BAD_REQUEST);
             }
 
@@ -214,7 +222,7 @@ public class UserService {
             userToUpdate.setAddress(userDTO.getAddress());
             userToUpdate.setPhone_number(userDTO.getPhone_number());
             // Actualizar el estado del usuario
-            userToUpdate.setStatus("confirmed");
+            userToUpdate.setStatus("Active");
 
             // Guardar los cambios en el usuario existente
             UserModel updatedUser = userRepository.save(userToUpdate);
@@ -383,6 +391,7 @@ public class UserService {
                 "</html>";
     }
 
+    @Transactional
     public ResponseEntity<?> resetPassword(String token, String password) {
         try {
             // Validación de datos

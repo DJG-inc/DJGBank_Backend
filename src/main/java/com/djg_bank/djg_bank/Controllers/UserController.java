@@ -31,10 +31,10 @@ public class UserController {
         }
     }
 
-    @PostMapping("/confirm-email/{id}")
-    public ResponseEntity<?> confirmEmail (@PathVariable Long id) {
+    @PostMapping("/confirm-email/{token}")
+    public ResponseEntity<?> confirmEmail (@PathVariable String token) {
         try {
-            return userService.confirmEmail(id);
+            return userService.confirmEmail(token);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al confirmar el email");
         }

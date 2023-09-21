@@ -48,9 +48,6 @@ public class UserModel {
     @Transient
     private String token;
 
-    @Transient
-    private String confirmation_token;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<LoanModel> loans;
 
