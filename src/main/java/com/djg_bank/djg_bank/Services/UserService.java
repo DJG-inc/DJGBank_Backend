@@ -255,6 +255,14 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("Las credenciales proporcionadas son incorrectas. Por favor, inténtalo de nuevo."), HttpStatus.BAD_REQUEST);
             }
 
+            if (existingUser.getStatus().equals("Pending")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario no ha confirmado su correo electrónico"), HttpStatus.BAD_REQUEST);
+            }
+
+            if (existingUser.getStatus().equals("Confirmed")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario no ha completado su registro"), HttpStatus.BAD_REQUEST);
+            }
+
             // Generar el token por el id del usuario
             String token = jwtUtils.generateJwtToken(existingUser.getId());
             existingUser.setToken(token);

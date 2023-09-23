@@ -5,9 +5,11 @@ import com.djg_bank.djg_bank.Mapper.TransactionsMapper;
 import com.djg_bank.djg_bank.Models.DebitCardsModel;
 import com.djg_bank.djg_bank.Models.SavingsAccountModel;
 import com.djg_bank.djg_bank.Models.TransactionsModel;
+import com.djg_bank.djg_bank.Models.UserModel;
 import com.djg_bank.djg_bank.Repositories.IDebitCardsRepository;
 import com.djg_bank.djg_bank.Repositories.ISavingsAccountRepository;
 import com.djg_bank.djg_bank.Repositories.ITransactionsRepository;
+import com.djg_bank.djg_bank.Repositories.IUserRepository;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +26,14 @@ public class TransactionsService {
 
     private final IDebitCardsRepository debitCardsRepository;
     private final ISavingsAccountRepository savingsAccountRepository;
+    private final IUserRepository userRepository;
 
-    public TransactionsService(ITransactionsRepository transactionsRepository, TransactionsMapper transactionsMapper, IDebitCardsRepository debitCardsRepository, ISavingsAccountRepository savingsAccountRepository) {
+    public TransactionsService(ITransactionsRepository transactionsRepository, TransactionsMapper transactionsMapper, IDebitCardsRepository debitCardsRepository, ISavingsAccountRepository savingsAccountRepository, IUserRepository userRepository) {
         this.transactionsRepository = transactionsRepository;
         this.transactionsMapper = transactionsMapper;
         this.debitCardsRepository = debitCardsRepository;
         this.savingsAccountRepository = savingsAccountRepository;
+        this.userRepository = userRepository;
     }
 
     public ResponseEntity<?> createTransaction(Long id, TransactionsDTO transactionsDTO) {
@@ -39,47 +43,67 @@ public class TransactionsService {
             if (debitCards == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe una tarjeta de débito con ese ID"), HttpStatus.BAD_REQUEST);
             }
-            // verificar que el monto de la transaccion sea mayor a 0
-            if (transactionsDTO.getAmount() <= 0){
-                return new ResponseEntity<>(new ErrorResponse("El monto de la transaccion debe ser mayor a 0"), HttpStatus.BAD_REQUEST);
+
+            // Buscar la cuenta de ahorros por su número
+            SavingsAccountModel savingsAccount = this.savingsAccountRepository.findByNumber(transactionsDTO.getNumber_of_savings_account()).orElse(null);
+            if (savingsAccount == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese número"), HttpStatus.BAD_REQUEST);
             }
 
+            //buscar usuario por el user_id
+            UserModel user = this.userRepository.findByUser_id(transactionsDTO.getUser_id());
+            if (user == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese user_id"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que la tarjeta de debito pertenezca al usuario
+            if (debitCards.getSavings_account().getUser().getUser_id() != user.getUser_id()) {
+                return new ResponseEntity<>(new ErrorResponse("La tarjeta de débito no pertenece al usuario"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que la cuenta de ahorros pertenezca al usuario
+            if (savingsAccount.getUser().getUser_id() != user.getUser_id()) {
+                return new ResponseEntity<>(new ErrorResponse("La cuenta de ahorros no pertenece al usuario"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que el monto sea mayor a 0
+            if (transactionsDTO.getAmount() <= 0) {
+                return new ResponseEntity<>(new ErrorResponse("El monto debe ser mayor a 0"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que el monto sea menor al saldo de la cuenta de ahorros
+            if (transactionsDTO.getAmount() > savingsAccount.getBalance()) {
+                return new ResponseEntity<>(new ErrorResponse("El monto debe ser menor al saldo de la cuenta de ahorros"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que el monto sea menor al saldo de la tarjeta de debito
+            if (transactionsDTO.getAmount() > debitCards.getSavings_account().getBalance()) {
+                return new ResponseEntity<>(new ErrorResponse("El monto debe ser menor al saldo de la tarjeta de debito"), HttpStatus.BAD_REQUEST);
+            }
+
+            // la fecha de la transaccion es la fecha actual
             Date date = new Date();
             transactionsDTO.setDate_of_transaction(date);
 
-            // verificar la descripcion de la transaccion
-            if (transactionsDTO.getDescription().length() > 100){
-                return new ResponseEntity<>(new ErrorResponse("La descripcion de la transaccion no puede ser mayor a 100 caracteres"), HttpStatus.BAD_REQUEST);
-            }
+            //la descripcion es la que viene en el request
+            transactionsDTO.setDescription(transactionsDTO.getDescription());
 
-            // verificar que el monto de la transaccion sea menor al monto de la tarjeta
-            if (transactionsDTO.getAmount() < debitCards.getSavings_account().getBalance()){
-                return new ResponseEntity<>(new ErrorResponse("El monto de la transaccion debe ser menor al monto de la tarjeta"), HttpStatus.BAD_REQUEST);
-            }
+            //crear la transaccion
+            this.transactionsRepository.save(this.transactionsMapper.toTransactionsModel(transactionsDTO));
 
-            // establecer el nuevo balance de la tarjeta
+            //actualizar el saldo de la cuenta de ahorros
+            savingsAccount.setBalance(savingsAccount.getBalance() - transactionsDTO.getAmount());
+            this.savingsAccountRepository.save(savingsAccount);
+
+            //actualizar el saldo de la tarjeta de debito
             debitCards.getSavings_account().setBalance(debitCards.getSavings_account().getBalance() - transactionsDTO.getAmount());
+            this.savingsAccountRepository.save(debitCards.getSavings_account());
 
-            // restar el monto de la transaccion al balance de la cuenta de ahorros
-            SavingsAccountModel savingsAccountModel = debitCards.getSavings_account();
-            savingsAccountModel.setBalance(savingsAccountModel.getBalance() - transactionsDTO.getAmount());
-            this.savingsAccountRepository.save(savingsAccountModel);
-
-            // Guardar la transaccion
-            this.debitCardsRepository.save(debitCards);
-
-            // Guardar la transaccion en la tarjeta de debito
-            TransactionsModel transactionsModel = this.transactionsMapper.toTransactionsModel(transactionsDTO);
-            transactionsModel.setDebit_card(debitCards);
-            this.transactionsRepository.save(transactionsModel);
-
-            return new ResponseEntity<>(transactionsModel, HttpStatus.CREATED);
+            //retornar la transaccion creada
+            return new ResponseEntity<>(transactionsDTO, HttpStatus.CREATED);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(new ErrorResponse("Error al crear la transaccion"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
-
 }

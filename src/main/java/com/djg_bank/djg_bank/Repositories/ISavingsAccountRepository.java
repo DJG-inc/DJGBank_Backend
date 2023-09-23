@@ -13,4 +13,6 @@ import java.util.Optional;
 public interface ISavingsAccountRepository extends JpaRepository<SavingsAccountModel, Long> {
     // Find savings account by user
     Optional<SavingsAccountModel> findByUser(UserModel user);
+    // Find savings account by number
+    Optional<SavingsAccountModel> findByNumber(String number);
 }

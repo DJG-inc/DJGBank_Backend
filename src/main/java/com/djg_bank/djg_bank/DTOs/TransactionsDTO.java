@@ -13,6 +13,8 @@ import java.util.Date;
 @ToString
 public class TransactionsDTO {
     private Long id;
+    private String user_id;
+    private String number_of_savings_account;
     private Double amount;
     private Date date_of_transaction;
     private String description;

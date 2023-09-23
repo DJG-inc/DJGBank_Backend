@@ -20,6 +20,12 @@ public class TransactionsModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false, length = 20)
+    private String user_id;
+
+    @Column(name = "number_of_savings_account", nullable = false, length = 20)
+    private String number_of_savings_account;
+
     @Column(name = "amount", nullable = false)
     private Double amount;
 
