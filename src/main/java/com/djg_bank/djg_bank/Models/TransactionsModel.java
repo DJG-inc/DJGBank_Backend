@@ -37,6 +37,6 @@ public class TransactionsModel {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "debit_card_id", nullable = false)
-    private DebitCardsModel debit_card;
+    @JoinColumn(name = "account_id", nullable = false)
+    private SavingsAccountModel savings_account;
 }

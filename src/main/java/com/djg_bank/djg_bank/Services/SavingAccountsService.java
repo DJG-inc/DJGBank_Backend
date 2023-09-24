@@ -41,6 +41,7 @@ public class SavingAccountsService {
             //convertir la fecha actual a string
             SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", java.util.Locale.US);
             String strDate = formatter.format(startDate);
+
             //setear la fecha actual al loanDTO
             savingsAccountDTO.setCreated_at(strDate);
 
@@ -51,6 +52,8 @@ public class SavingAccountsService {
             savingsAccountDTO.setInterest_rate(0.0);
 
             SavingsAccountModel savingsAccountModel = savingAccountMapper.toSavingsAccountModel(savingsAccountDTO);
+            String account_number = user.getFirst_name().charAt(0) + user.getLast_name().charAt(0) + user.getUser_id();
+            savingsAccountModel.setAccount_number(account_number);
             savingsAccountModel.setUser(user);
 
             SavingsAccountModel savingsAccountModelSaved = savingsAccountRepository.save(savingsAccountModel);

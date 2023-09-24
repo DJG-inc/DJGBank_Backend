@@ -2,10 +2,7 @@ package com.djg_bank.djg_bank.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 import java.util.List;
@@ -21,7 +18,7 @@ public class DebitCardsModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_number", nullable = false, length = 16)
+    @Column(name = "card_number", nullable = false, length = 100)
     private String card_number;
 
     @Column(name = "card_type", nullable = false, length = 100)
@@ -39,9 +36,7 @@ public class DebitCardsModel {
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "savings_account_id", nullable = false)
+    @ToString.Exclude
     private SavingsAccountModel savings_account;
-
-    @OneToMany(mappedBy = "debit_card", cascade = CascadeType.ALL)
-    private List<TransactionsModel> transactions;
 
 }

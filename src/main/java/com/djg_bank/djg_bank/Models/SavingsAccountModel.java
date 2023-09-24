@@ -2,10 +2,7 @@ package com.djg_bank.djg_bank.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 import java.util.List;
@@ -21,6 +18,9 @@ public class SavingsAccountModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "account_number", nullable = false)
+    private String account_number;
+
     @Column(name = "balance", nullable = false)
     private Double balance;
 
@@ -33,8 +33,17 @@ public class SavingsAccountModel {
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private UserModel user;
 
     @OneToMany(mappedBy = "savings_account", cascade = CascadeType.ALL)
     private List<DebitCardsModel> debit_cards;
+
+    @OneToMany(mappedBy = "savings_account", cascade = CascadeType.ALL)
+    private List<TransactionsModel> transactions;
+
+    public void addTransaction(TransactionsModel transaction) {
+        transactions.add(transaction);
+        transaction.setSavings_account(this);
+    }
 }

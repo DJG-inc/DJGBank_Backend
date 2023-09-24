@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Service
 public class TransactionsService {
@@ -38,68 +39,66 @@ public class TransactionsService {
 
     public ResponseEntity<?> createTransaction(Long id, TransactionsDTO transactionsDTO) {
         try {
-            // Buscar la tarjeta de débito por su ID
-            DebitCardsModel debitCards = this.debitCardsRepository.findById(id).orElse(null);
-            if (debitCards == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe una tarjeta de débito con ese ID"), HttpStatus.BAD_REQUEST);
-            }
+            System.out.println(transactionsDTO);
 
-            // Buscar la cuenta de ahorros por su número
-            SavingsAccountModel savingsAccount = this.savingsAccountRepository.findByNumber(transactionsDTO.getNumber_of_savings_account()).orElse(null);
-            if (savingsAccount == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese número"), HttpStatus.BAD_REQUEST);
-            }
-
-            //buscar usuario por el user_id
-            UserModel user = this.userRepository.findByUser_id(transactionsDTO.getUser_id());
+            UserModel user = this.userRepository.findById(id).orElse(null);
             if (user == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese user_id"), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
-            //verificar que la tarjeta de debito pertenezca al usuario
-            if (debitCards.getSavings_account().getUser().getUser_id() != user.getUser_id()) {
-                return new ResponseEntity<>(new ErrorResponse("La tarjeta de débito no pertenece al usuario"), HttpStatus.BAD_REQUEST);
-            }
+            SavingsAccountModel savingsAccount = user.getSavings_account();
 
-            //verificar que la cuenta de ahorros pertenezca al usuario
-            if (savingsAccount.getUser().getUser_id() != user.getUser_id()) {
+            // Verify the savings account belongs to the user
+            if (!Objects.equals(savingsAccount.getUser().getId(), user.getId())) {
                 return new ResponseEntity<>(new ErrorResponse("La cuenta de ahorros no pertenece al usuario"), HttpStatus.BAD_REQUEST);
             }
 
-            //verificar que el monto sea mayor a 0
+            UserModel user_to_send = this.userRepository.findByUser_id(transactionsDTO.getUser_id());
+            if (user_to_send == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese user_id"), HttpStatus.BAD_REQUEST);
+            }
+
+            System.out.println(transactionsDTO.getNumber_of_savings_account());
+            SavingsAccountModel savingsAccount_to_send = this.savingsAccountRepository.findByAccount_number(transactionsDTO.getNumber_of_savings_account()).orElse(null);
+            System.out.println(savingsAccount_to_send);
+            if (savingsAccount_to_send == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese número"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Verify the recipient's savings account belongs to them
+            if (!Objects.equals(savingsAccount_to_send.getUser().getId(), user_to_send.getId())) {
+                return new ResponseEntity<>(new ErrorResponse("La cuenta de ahorros no pertenece al usuario"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Ensure amount is greater than 0
             if (transactionsDTO.getAmount() <= 0) {
                 return new ResponseEntity<>(new ErrorResponse("El monto debe ser mayor a 0"), HttpStatus.BAD_REQUEST);
             }
 
-            //verificar que el monto sea menor al saldo de la cuenta de ahorros
+            // Ensure amount is less than or equal to the sender's balance
             if (transactionsDTO.getAmount() > savingsAccount.getBalance()) {
                 return new ResponseEntity<>(new ErrorResponse("El monto debe ser menor al saldo de la cuenta de ahorros"), HttpStatus.BAD_REQUEST);
             }
 
-            //verificar que el monto sea menor al saldo de la tarjeta de debito
-            if (transactionsDTO.getAmount() > debitCards.getSavings_account().getBalance()) {
-                return new ResponseEntity<>(new ErrorResponse("El monto debe ser menor al saldo de la tarjeta de debito"), HttpStatus.BAD_REQUEST);
-            }
-
-            // la fecha de la transaccion es la fecha actual
             Date date = new Date();
             transactionsDTO.setDate_of_transaction(date);
 
-            //la descripcion es la que viene en el request
+            // Description from the request
             transactionsDTO.setDescription(transactionsDTO.getDescription());
 
-            //crear la transaccion
-            this.transactionsRepository.save(this.transactionsMapper.toTransactionsModel(transactionsDTO));
+            // Create and save the transaction
+            TransactionsModel newTransaction = this.transactionsMapper.toTransactionsModel(transactionsDTO);
+            savingsAccount.addTransaction(newTransaction);
+            this.transactionsRepository.save(newTransaction);
 
-            //actualizar el saldo de la cuenta de ahorros
+            // Update the sender's savings account balance
             savingsAccount.setBalance(savingsAccount.getBalance() - transactionsDTO.getAmount());
             this.savingsAccountRepository.save(savingsAccount);
 
-            //actualizar el saldo de la tarjeta de debito
-            debitCards.getSavings_account().setBalance(debitCards.getSavings_account().getBalance() - transactionsDTO.getAmount());
-            this.savingsAccountRepository.save(debitCards.getSavings_account());
+            // Update the recipient's savings account balance
+            savingsAccount_to_send.setBalance(savingsAccount_to_send.getBalance() + transactionsDTO.getAmount());
+            this.savingsAccountRepository.save(savingsAccount_to_send);
 
-            //retornar la transaccion creada
             return new ResponseEntity<>(transactionsDTO, HttpStatus.CREATED);
 
         } catch (Exception e) {

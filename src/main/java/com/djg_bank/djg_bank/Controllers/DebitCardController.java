@@ -24,8 +24,8 @@ public class DebitCardController {
     @PostMapping("/create/{id}")
     public ResponseEntity<?> create(@PathVariable Long id, @RequestBody Map<String, String> requestBody) {
         try {
-            String cardType = requestBody.get("cardType");
-            return debitCardService.createDebitCard(id, cardType);
+            String card_type = requestBody.get("cardType");
+            return debitCardService.createDebitCard(id, card_type);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear la tarjeta de crédito");
         }

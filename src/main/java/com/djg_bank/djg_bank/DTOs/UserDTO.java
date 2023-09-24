@@ -20,3 +20,14 @@ public class UserDTO {
     private String phone_number;
     private String status;
 }
+
+
+// Let's create a json file for testing the complete-register endpoint:
+// {
+//     "user_id": "12345678",
+//     "first_name": "John",
+//     "last_name": "Doe",
+//     "date_of_birth": "07/12/2001",
+//     "address": "Calle 123",
+//     "phone_number": "12345678"
+// }

@@ -33,18 +33,20 @@ public class DebitCardService {
         this.resourcesBank = resourcesBank;
     }
 
-    public ResponseEntity<?> createDebitCard(Long id, String cardType) {
+    public ResponseEntity<?> createDebitCard(Long id,String card_type) {
         try {
-            // Buscar la cuenta de ahorros por su ID
-            SavingsAccountModel savingsAccount = this.savingsAccountRepository.findById(id).orElse(null);
-            if (savingsAccount == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese ID"), HttpStatus.BAD_REQUEST);
-            }
-
             //buscar el usuario por su ID
             UserModel user = this.userRepository.findById(id).orElse(null);
             if (user == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            Long account_id = user.getSavings_account().getId();
+
+            // Buscar la cuenta de ahorros por su ID
+            SavingsAccountModel savingsAccount = this.savingsAccountRepository.findById(account_id).orElse(null);
+            if (savingsAccount == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
             // Obtener la fecha de nacimiento del usuario como String en el formato "1/1/2000"
@@ -63,17 +65,18 @@ public class DebitCardService {
             }
 
             // Validar el tipo de tarjeta (Visa o MasterCard)
-            if (this.resourcesBank.isValidCardType(cardType)) {
+            if (this.resourcesBank.isValidCardType(card_type)) {
                 return new ResponseEntity<>(new ErrorResponse("Tipo de tarjeta no válido"), HttpStatus.BAD_REQUEST);
             }
 
             // Generar un número de tarjeta válido según el tipo seleccionado
-            String cardNumber = this.resourcesBank.generateValidCardNumber(cardType);
+            String cardNumber = this.resourcesBank.generateValidCardNumber(card_type);
 
             // Crear la tarjeta de débito
             DebitCardsModel debitCard = new DebitCardsModel();
             debitCard.setCard_number(cardNumber);
-            debitCard.setCard_type(cardType);
+            debitCard.setCard_type(card_type);
+
 
             // Generar y establecer la fecha de vencimiento (expiry_date) automáticamente
             Date expiryDate = this.resourcesBank.generateExpiryDate();
