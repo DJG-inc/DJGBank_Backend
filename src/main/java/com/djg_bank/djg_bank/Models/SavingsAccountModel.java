@@ -41,9 +41,4 @@ public class SavingsAccountModel {
 
     @OneToMany(mappedBy = "savings_account", cascade = CascadeType.ALL)
     private List<TransactionsModel> transactions;
-
-    public void addTransaction(TransactionsModel transaction) {
-        transactions.add(transaction);
-        transaction.setSavings_account(this);
-    }
 }
