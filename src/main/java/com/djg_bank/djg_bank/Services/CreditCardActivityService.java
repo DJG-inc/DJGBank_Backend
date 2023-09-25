@@ -74,15 +74,18 @@ public class CreditCardActivityService {
             creditCardActivityDTO.setDescription(creditCardActivityDTO.getType() + " " + creditCardActivityDTO.getAmount());
 
             //establecer el nuevo limite de la tarjeta
-            if (creditCardActivityDTO.getType().equals("CHARGE")) {
-                creditCard.setCurrent_debt(creditCard.getCurrent_debt() + creditCardActivityDTO.getAmount());
-            } else if (creditCardActivityDTO.getType().equals("PAYMENT")) {
-                creditCard.setCurrent_debt(creditCard.getCurrent_debt() - creditCardActivityDTO.getAmount());
-                user.getSavings_account().setBalance(user.getSavings_account().getBalance() - creditCardActivityDTO.getAmount());
-            } else if (creditCardActivityDTO.getType().equals("CASH_ADVANCE")) {
-                creditCard.setCurrent_debt(creditCard.getCurrent_debt() + creditCardActivityDTO.getAmount());
+            switch (creditCardActivityDTO.getType()) {
+                case "CHARGE" ->
+                        creditCard.setCurrent_debt(creditCard.getCurrent_debt() + creditCardActivityDTO.getAmount());
+                case "PAYMENT" -> {
+                    creditCard.setCurrent_debt(creditCard.getCurrent_debt() - creditCardActivityDTO.getAmount());
+                    user.getSavings_account().setBalance(user.getSavings_account().getBalance() - creditCardActivityDTO.getAmount());
+                }
+                case "CASH_ADVANCE" -> {
+                    creditCard.setCurrent_debt(creditCard.getCurrent_debt() + creditCardActivityDTO.getAmount());
 //                Update the savings account balance
-                user.getSavings_account().setBalance(user.getSavings_account().getBalance() + creditCardActivityDTO.getAmount());
+                    user.getSavings_account().setBalance(user.getSavings_account().getBalance() + creditCardActivityDTO.getAmount());
+                }
             }
 
             //guardar la tarjeta de credito y el usuario
