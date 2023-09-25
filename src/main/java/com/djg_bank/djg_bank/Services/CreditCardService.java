@@ -78,7 +78,7 @@ public class CreditCardService {
             creditCardModel.setDate_issued(dateIssued);
 
             // Establecer el límite de crédito (credit_limit) y el saldo actual (current_debt) con valores iniciales
-            creditCardModel.setCredit_limit(1000.0);
+            creditCardModel.setCredit_limit(50000.0);
             creditCardModel.setCurrent_debt(0.0);
 
             // Asociar la tarjeta de crédito al usuario
