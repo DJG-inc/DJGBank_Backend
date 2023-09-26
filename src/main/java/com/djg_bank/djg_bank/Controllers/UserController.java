@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
-public class UserController {
+public class  UserController {
 
     private final UserService userService;
     private final JwtUtils jwtUtils;

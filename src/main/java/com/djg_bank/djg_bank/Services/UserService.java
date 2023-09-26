@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.regex.Pattern;
 
@@ -50,9 +51,19 @@ public class UserService {
                 return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
             }
 
+            if (!isValidUser_id(userDTO.getUser_id())) {
+                return new ResponseEntity<>(new ErrorResponse("Formato de cédula no válido"), HttpStatus.BAD_REQUEST);
+            }
+
             // Verificar si el usuario ya existe
             UserModel existingUser = userRepository.findByEmail(userDTO.getEmail());
             if (existingUser != null) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario ya existe"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Verificar si el usuario ya existe
+            UserModel existingUser2 = userRepository.findByUser_id(userDTO.getUser_id());
+            if (existingUser2 != null) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario ya existe"), HttpStatus.BAD_REQUEST);
             }
 
@@ -67,12 +78,13 @@ public class UserService {
             UserModel savedUser = userRepository.save(userModel);
 
             String token = jwtUtils.generateJwtToken(savedUser.getId());
-            savedUser.setToken(token);
+            String encodeToken = Base64.getEncoder().encodeToString(token.getBytes());
+            savedUser.setToken(encodeToken);
 
             // Enviar correo electrónico de bienvenida
             try {
                 String subject = "Bienvenido a DJG Bank";
-                String email_content = getConfirmContent(token);
+                String email_content = getConfirmContent(encodeToken);
                 emailService.sendEmail(savedUser.getEmail(), subject, email_content);
             } catch (Exception e) {
                 return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
@@ -84,7 +96,7 @@ public class UserService {
     }
 
     private static String getConfirmContent(String token) {
-        String confirmation_url = "http://localhost:4200/confirm-email/" + token;
+        String confirmation_url = "http://localhost:5173/confirm-email/" + token;
         return "<!DOCTYPE html>" +
                         "<html>" +
                         "<head>" +
@@ -143,7 +155,7 @@ public class UserService {
                                 "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
                                 "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
                                 "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido, nos alegra tenerte con nosotros, lo que sigue ahora es terminar tu registro, porfavor ingresa a la siguiente dirección:</p>" +
-                                "        <a href=\"http://localhost:4200/login\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Iniciar sesión</a>" +
+                                "        <a href=\"http://localhost:5173/login\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Iniciar sesión</a>" +
                                 "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
                                 "    </div>" +
                                 "</body>" +
@@ -175,40 +187,12 @@ public class UserService {
         try {
             // Verificar si el usuario existe
             UserModel userToUpdate = this.userRepository.findById(id).orElse(null);
-            if (userToUpdate == null) {
-                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
-            }
-
-            if (userToUpdate.getStatus().equals("Active")) {
-                return new ResponseEntity<>(new ErrorResponse("El usuario ya ha completado su registro"), HttpStatus.BAD_REQUEST);
-            }
-
-            if (userToUpdate.getStatus().equals("Pending")) {
-                return new ResponseEntity<>(new ErrorResponse("El usuario no ha confirmado su correo electrónico"), HttpStatus.BAD_REQUEST);
-            }
-
-            // Actualizar todos los campos del usuario existente en función de los datos proporcionados en updatedUserDTO
-            if (userDTO.getEmail() != null) {
-                // Validar el formato de correo electrónico si es necesario
-                if (isValidEmail(userDTO.getEmail())) {
-                    return new ResponseEntity<>(new ErrorResponse("Formato de correo electrónico no válido"), HttpStatus.BAD_REQUEST);
-                }
-                userToUpdate.setEmail(userDTO.getEmail());
-            }
-
-            if (userDTO.getUser_id() != null) {
-                // Validar el formato de cédula si es necesario
-                if (!isValidUser_id(userDTO.getUser_id())) {
-                    return new ResponseEntity<>(new ErrorResponse("Formato de cédula no válido"), HttpStatus.BAD_REQUEST);
-                }
-                userToUpdate.setUser_id(userDTO.getUser_id());
-            }
 
             if (userDTO.getDate_of_birth() != null) {
                 // Validar el formato de fecha de nacimiento si es necesario
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
                 try {
-//                   Enviar fecha formateada como dd/MM/yyyy
+                    // Enviar fecha formateada como dd/MM/yyyy
                     Date parsedDate = dateFormat.parse(userDTO.getDate_of_birth());
                     userToUpdate.setDate_of_birth(dateFormat.format(parsedDate));
                 } catch (ParseException e) {
@@ -216,19 +200,19 @@ public class UserService {
                 }
             }
 
+            // Actualizar el estado del usuario
+            userToUpdate.setStatus("Active");
+
             // Actualizar el resto de campos
             userToUpdate.setFirst_name(userDTO.getFirst_name());
             userToUpdate.setLast_name(userDTO.getLast_name());
             userToUpdate.setAddress(userDTO.getAddress());
             userToUpdate.setPhone_number(userDTO.getPhone_number());
-            // Actualizar el estado del usuario
-            userToUpdate.setStatus("Active");
 
             // Guardar los cambios en el usuario existente
             UserModel updatedUser = userRepository.save(userToUpdate);
 
             return new ResponseEntity<>(userMapper.toUserDTO(updatedUser), HttpStatus.OK);
-
         } catch (DataIntegrityViolationException e) {
             return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al actualizar el usuario"), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
@@ -253,14 +237,6 @@ public class UserService {
             // Verificar si la contraseña es correcta
             if (!bcrypt.passwordEncoder().matches(userDTO.getPassword(), existingUser.getPassword())) {
                 return new ResponseEntity<>(new ErrorResponse("Las credenciales proporcionadas son incorrectas. Por favor, inténtalo de nuevo."), HttpStatus.BAD_REQUEST);
-            }
-
-            if (existingUser.getStatus().equals("Pending")) {
-                return new ResponseEntity<>(new ErrorResponse("El usuario no ha confirmado su correo electrónico"), HttpStatus.BAD_REQUEST);
-            }
-
-            if (existingUser.getStatus().equals("Confirmed")) {
-                return new ResponseEntity<>(new ErrorResponse("El usuario no ha completado su registro"), HttpStatus.BAD_REQUEST);
             }
 
             // Generar el token por el id del usuario

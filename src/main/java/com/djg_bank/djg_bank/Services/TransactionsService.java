@@ -91,10 +91,6 @@ public class TransactionsService {
             newTransaction.setSavings_account(savingsAccount);
             this.transactionsRepository.save(newTransaction);
 
-//            TransactionsModel newTransaction = this.transactionsMapper.toTransactionsModel(transactionsDTO);
-//            savingsAccount.addTransaction(newTransaction);
-//            this.transactionsRepository.save(newTransaction);
-//
             // Update the sender's savings account balance
             savingsAccount.setBalance(savingsAccount.getBalance() - transactionsDTO.getAmount());
             this.savingsAccountRepository.save(savingsAccount);
