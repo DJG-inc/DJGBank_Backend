@@ -114,6 +114,46 @@ public class UserService {
                         "</html>";
     }
 
+    public ResponseEntity<?> resentConfrmationemail(String token) {
+        try {
+            // Verificar si el usuario existe
+
+            Long userId = jwtUtils.getIdFromJwtToken(token);
+
+            UserModel userToUpdate = this.userRepository.findById(userId).orElse(null);
+            if (userToUpdate == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            if (userToUpdate.getStatus().equals("Active")) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario ya ha completado su registro"), HttpStatus.BAD_REQUEST);
+            }
+
+            String encodeToken = Base64.getEncoder().encodeToString(token.getBytes());
+            userToUpdate.setToken(encodeToken);
+
+            // Guardar los cambios en el usuario existente
+            UserModel updatedUser = userRepository.save(userToUpdate);
+
+            // Enviar correo de confirmacion
+            try {
+                String subject = "Bienvenido a DJG Bank";
+                String email_content = getConfirmContent(encodeToken);
+
+                emailService.sendEmail(userToUpdate.getEmail(), subject, email_content);
+
+            } catch (Exception e) {
+                return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>(userMapper.toUserDTO(userToUpdate), HttpStatus.OK);
+
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>(new ErrorResponse("Error de integridad de datos al actualizar el usuario"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ErrorResponse("Error al actualizar el usuario: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
     private boolean isValidEmail(String email) {
@@ -340,11 +380,13 @@ public class UserService {
 
             // Generar el token por el id del usuario
             String token = jwtUtils.generateJwtToken(existingUser.getId());
+            String encodeToken = Base64.getEncoder().encodeToString(token.getBytes());
+            existingUser.setToken(encodeToken);
 
             // Enviar correo electrónico de restablecimiento de contraseña
             try {
                 String subject = "Restablecer contraseña";
-                String email_content = getResetContent(token);
+                String email_content = getResetContent(encodeToken);
 
                 emailService.sendEmail(existingUser.getEmail(), subject, email_content);
             } catch (Exception e) {

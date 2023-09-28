@@ -106,7 +106,7 @@ public class  UserController {
         }
     }
 
-    @PostMapping("/reset-password/{token}")
+    @PostMapping("/restore-password/{token}")
     public ResponseEntity<?> resetPassword(@PathVariable String token, @RequestBody Map<String, String> requestBody) {
         try {
             String password = requestBody.get("password");
@@ -116,6 +116,13 @@ public class  UserController {
         }
     }
 
-
+    @PostMapping("/resend-email/{token}")
+    public ResponseEntity<?> resendEmail(@PathVariable String token) {
+        try {
+            return userService.resentConfrmationemail(token);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al reenviar el email");
+        }
+    }
 
 }
