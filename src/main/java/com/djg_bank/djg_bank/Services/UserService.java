@@ -399,7 +399,7 @@ public class UserService {
     }
 
     private static String getResetContent(String token) {
-        String reset_url = "http://localhost:4200/reset-password/" + token;
+        String reset_url = "http://localhost:5173/reset-password/" + token;
         return "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +

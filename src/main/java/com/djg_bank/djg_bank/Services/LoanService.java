@@ -7,6 +7,7 @@ import com.djg_bank.djg_bank.Models.UserModel;
 import com.djg_bank.djg_bank.Repositories.ILoanRepository;
 import com.djg_bank.djg_bank.Repositories.IUserRepository;
 import com.djg_bank.djg_bank.Utils.ErrorResponse;
+import com.djg_bank.djg_bank.Utils.ResourcesBank;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,13 @@ public class LoanService {
     private final LoanMapper loanMapper;
     private final IUserRepository userRepository;
 
-    public LoanService(ILoanRepository loanRepository, LoanMapper loanMapper, IUserRepository userRepository) {
+    private final ResourcesBank resourcesBank;
+
+    public LoanService(ILoanRepository loanRepository, LoanMapper loanMapper, IUserRepository userRepository, ResourcesBank resourcesBank) {
         this.loanRepository = loanRepository;
         this.loanMapper = loanMapper;
         this.userRepository = userRepository;
+        this.resourcesBank = resourcesBank;
     }
 
     public ResponseEntity<?> save(Long id, LoanDTO loanDTO) {
@@ -43,7 +47,7 @@ public class LoanService {
             Date dateOfBirth = dateFormat.parse(dateOfBirthString);
 
             // Calcular la edad del usuario a partir de la fecha de nacimiento
-            int age = calcularEdad(dateOfBirth);
+            int age = resourcesBank.calculateAge(dateOfBirth);
 
             // Verificar que el usuario tenga al menos 18 años
             if (age < 18) {
@@ -70,22 +74,6 @@ public class LoanService {
             System.out.printf("Error al guardar el préstamo: %s", e.getMessage());
             return new ResponseEntity<>(new ErrorResponse("Error al guardar el préstamo"), HttpStatus.BAD_REQUEST);
         }
-    }
-
-    // Método para calcular la edad a partir de la fecha de nacimiento
-    private int calcularEdad(Date dateOfBirth) {
-        Calendar dob = Calendar.getInstance();
-        dob.setTime(dateOfBirth);
-
-        Calendar currentDate = Calendar.getInstance();
-
-        int age = currentDate.get(Calendar.YEAR) - dob.get(Calendar.YEAR);
-
-        if (currentDate.get(Calendar.DAY_OF_YEAR) < dob.get(Calendar.DAY_OF_YEAR)) {
-            age--;
-        }
-
-        return age;
     }
 
     public ResponseEntity<?> findAll() {
