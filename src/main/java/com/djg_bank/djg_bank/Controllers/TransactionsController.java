@@ -1,8 +1,9 @@
 package com.djg_bank.djg_bank.Controllers;
 
 import com.djg_bank.djg_bank.DTOs.TransactionsDTO;
+import com.djg_bank.djg_bank.Services.ITransactionsService;
 import com.djg_bank.djg_bank.Security.JwtUtils;
-import com.djg_bank.djg_bank.Services.TransactionsService;
+import com.djg_bank.djg_bank.Services.Implementations.TransactionsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/transactions")
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class TransactionsController {
-    private final TransactionsService transactionsService;
+    private final ITransactionsService transactionsService;
 
     private final JwtUtils jwtUtils;
 

@@ -1,8 +1,8 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.TransactionsDTO;
+import com.djg_bank.djg_bank.Services.ITransactionsService;
 import com.djg_bank.djg_bank.Mapper.TransactionsMapper;
-import com.djg_bank.djg_bank.Models.DebitCardsModel;
 import com.djg_bank.djg_bank.Models.SavingsAccountModel;
 import com.djg_bank.djg_bank.Models.TransactionsModel;
 import com.djg_bank.djg_bank.Models.UserModel;
@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.Objects;
 
 @Service
-public class TransactionsService {
+public class TransactionsService implements ITransactionsService {
 
     private final ITransactionsRepository transactionsRepository;
 
@@ -37,6 +37,7 @@ public class TransactionsService {
         this.userRepository = userRepository;
     }
 
+    @Override
     public ResponseEntity<?> createTransaction(Long id, TransactionsDTO transactionsDTO) {
         try {
             System.out.println(transactionsDTO);

@@ -1,8 +1,9 @@
 package com.djg_bank.djg_bank.Controllers;
 
 import com.djg_bank.djg_bank.DTOs.SavingsAccountDTO;
+import com.djg_bank.djg_bank.Services.ISavingAccountsService;
 import com.djg_bank.djg_bank.Security.JwtUtils;
-import com.djg_bank.djg_bank.Services.SavingAccountsService;
+import com.djg_bank.djg_bank.Services.Implementations.SavingAccountsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class SavingAccountsController {
 
-    private final SavingAccountsService savingAccountsService;
-
+    private final ISavingAccountsService savingAccountsService;
     private final JwtUtils jwtUtils;
 
     public SavingAccountsController(SavingAccountsService savingAccountsService, JwtUtils jwtUtils) {

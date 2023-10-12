@@ -1,6 +1,7 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.SavingsAccountDTO;
+import com.djg_bank.djg_bank.Services.ISavingAccountsService;
 import com.djg_bank.djg_bank.Mapper.SavingAccountMapper;
 import com.djg_bank.djg_bank.Models.SavingsAccountModel;
 import com.djg_bank.djg_bank.Models.UserModel;
@@ -15,7 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Service
-public class SavingAccountsService {
+public class SavingAccountsService implements ISavingAccountsService {
 
     private final ISavingsAccountRepository savingsAccountRepository;
     private final SavingAccountMapper savingAccountMapper;

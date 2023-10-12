@@ -1,6 +1,7 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.CreditCardDTO;
+import com.djg_bank.djg_bank.Services.ICreditCardService;
 import com.djg_bank.djg_bank.Mapper.CreditCardMapper;
 import com.djg_bank.djg_bank.Models.CreditCardModel;
 import com.djg_bank.djg_bank.Models.UserModel;
@@ -16,7 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Service
-public class CreditCardService {
+public class CreditCardService implements ICreditCardService {
     private final ICreditCardRepository creditCardRepository;
     private final CreditCardMapper creditCardMapper;
     private final IUserRepository userRepository;
@@ -29,6 +30,7 @@ public class CreditCardService {
         this.resourcesBank = resourcesBank;
     }
 
+    @Override
     public ResponseEntity<?> createCreditCard(Long id, String cardType) {
         try {
             // Buscar el usuario por su ID

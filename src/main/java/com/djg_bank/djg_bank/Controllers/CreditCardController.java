@@ -1,7 +1,7 @@
 package com.djg_bank.djg_bank.Controllers;
 
+import com.djg_bank.djg_bank.Services.ICreditCardService;
 import com.djg_bank.djg_bank.Security.JwtUtils;
-import com.djg_bank.djg_bank.Services.CreditCardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,11 +12,11 @@ import java.util.Map;
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class CreditCardController {
 
-    private final CreditCardService creditCardService;
+    private final ICreditCardService creditCardService;
 
     private final JwtUtils jwtUtils;
 
-    public CreditCardController(CreditCardService creditCardService, JwtUtils jwtUtils) {
+    public CreditCardController(ICreditCardService creditCardService, JwtUtils jwtUtils) {
         this.creditCardService = creditCardService;
         this.jwtUtils = jwtUtils;
     }

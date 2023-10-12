@@ -1,6 +1,7 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.LoanDTO;
+import com.djg_bank.djg_bank.Services.ILoanService;
 import com.djg_bank.djg_bank.Mapper.LoanMapper;
 import com.djg_bank.djg_bank.Models.LoanModel;
 import com.djg_bank.djg_bank.Models.UserModel;
@@ -17,7 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class LoanService {
+public class LoanService implements ILoanService {
     private final ILoanRepository loanRepository;
     private final LoanMapper loanMapper;
     private final IUserRepository userRepository;
@@ -31,6 +32,7 @@ public class LoanService {
         this.resourcesBank = resourcesBank;
     }
 
+    @Override
     public ResponseEntity<?> save(Long id, LoanDTO loanDTO) {
         try {
             // Buscar el usuario por su ID
@@ -76,6 +78,7 @@ public class LoanService {
         }
     }
 
+    @Override
     public ResponseEntity<?> findAll() {
         try {
             return new ResponseEntity<>(this.loanRepository.findAll(), HttpStatus.OK);
@@ -84,6 +87,7 @@ public class LoanService {
         }
     }
 
+    @Override
     public ResponseEntity<?> findById(Long id) {
         try {
             LoanModel loan = this.loanRepository.findById(id).orElse(null);
@@ -96,6 +100,7 @@ public class LoanService {
         }
     }
 
+    @Override
     public ResponseEntity<?> payLoan(Long userId, Long loanId) {
         try {
             // Buscar el préstamo por su ID

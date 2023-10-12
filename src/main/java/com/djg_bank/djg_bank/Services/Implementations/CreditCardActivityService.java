@@ -1,6 +1,7 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.CreditCardActivityDTO;
+import com.djg_bank.djg_bank.Services.ICreditCardActivityService;
 import com.djg_bank.djg_bank.Mapper.CreditCardActivityMapper;
 import com.djg_bank.djg_bank.Models.CreditCardActivityModel;
 import com.djg_bank.djg_bank.Models.CreditCardModel;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 @Service
-public class CreditCardActivityService {
+public class CreditCardActivityService implements ICreditCardActivityService {
     private final ICreditCardActivityRepository creditCardActivityRepository;
     private final CreditCardActivityMapper creditCardActivityMapper;
     private final ICreditCardRepository creditCardRepository;
@@ -31,6 +32,7 @@ public class CreditCardActivityService {
     }
 
     @Transactional
+    @Override
     public ResponseEntity<?> createCreditCardActivity(Long id, CreditCardActivityDTO creditCardActivityDTO) {
         try {
             // Buscar la tarjeta de crédito por su ID

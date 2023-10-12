@@ -1,6 +1,7 @@
-package com.djg_bank.djg_bank.Services;
+package com.djg_bank.djg_bank.Services.Implementations;
 
 import com.djg_bank.djg_bank.DTOs.DebitCardsDTO;
+import com.djg_bank.djg_bank.Services.IDebitCardService;
 import com.djg_bank.djg_bank.Mapper.DebitCardsMapper;
 import com.djg_bank.djg_bank.Models.DebitCardsModel;
 import com.djg_bank.djg_bank.Models.SavingsAccountModel;
@@ -18,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Service
-public class DebitCardService {
+public class DebitCardService implements IDebitCardService {
     private final IDebitCardsRepository debitCardRepository;
     private final DebitCardsMapper debitCardMapper;
     private final ISavingsAccountRepository savingsAccountRepository;
@@ -33,6 +34,7 @@ public class DebitCardService {
         this.resourcesBank = resourcesBank;
     }
 
+    @Override
     public ResponseEntity<?> createDebitCard(Long id,String card_type) {
         try {
             //buscar el usuario por su ID

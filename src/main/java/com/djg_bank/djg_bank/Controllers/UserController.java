@@ -1,8 +1,8 @@
 package com.djg_bank.djg_bank.Controllers;
 
 import com.djg_bank.djg_bank.DTOs.UserDTO;
+import com.djg_bank.djg_bank.Services.IUserService;
 import com.djg_bank.djg_bank.Security.JwtUtils;
-import com.djg_bank.djg_bank.Services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +14,10 @@ import java.util.Map;
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class  UserController {
 
-    private final UserService userService;
+    private final IUserService userService;
     private final JwtUtils jwtUtils;
 
-    public UserController(UserService userService, JwtUtils jwtUtils) {
+    public UserController(IUserService userService, JwtUtils jwtUtils) {
         this.userService = userService;
         this.jwtUtils = jwtUtils;
     }
