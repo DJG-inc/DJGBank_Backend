@@ -89,4 +89,20 @@ public class ResourcesBank {
 
         return age;
     }
+
+    public String generateRandomCode() {
+        // Generate a 4 code with letters and numbers
+        String code = "";
+        Random random = new Random();
+
+        for (int i = 0; i < 4; i++) {
+            int randomInt = random.nextInt(36);
+            if (randomInt < 10) {
+                code += randomInt;
+            } else {
+                code += (char) (randomInt + 55);
+            }
+        }
+        return code;
+    }
 }

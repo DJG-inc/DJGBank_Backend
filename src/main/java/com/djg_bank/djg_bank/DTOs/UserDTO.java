@@ -19,6 +19,7 @@ public class UserDTO {
     private String address;
     private String phone_number;
     private String status;
+    private String ip_address;
 }
 
 
