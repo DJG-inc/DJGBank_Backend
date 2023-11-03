@@ -77,11 +77,6 @@ public class UserService implements IUserService {
             String passwordBcrypt = bcrypt.passwordEncoder().encode(password);
             userDTO.setPassword(passwordBcrypt);
 
-            //hash de la ip
-            String ip_address = userDTO.getIp_address();
-            String ip_addressBcrypt = bcrypt.passwordEncoder().encode(ip_address);
-            userDTO.setIp_address(ip_addressBcrypt);
-
             // Guardar el usuario
             UserModel userModel = userMapper.toUserModel(userDTO);
             userModel.setStatus("Pending");
@@ -291,33 +286,6 @@ public class UserService implements IUserService {
             // Verificar si la contraseña es correcta
             if (!bcrypt.passwordEncoder().matches(userDTO.getPassword(), existingUser.getPassword())) {
                 return new ResponseEntity<>(new ErrorResponse("Las credenciales proporcionadas son incorrectas. Por favor, inténtalo de nuevo."), HttpStatus.BAD_REQUEST);
-            }
-
-            // Verificar la ip conocida
-            if (!bcrypt.passwordEncoder().matches(userDTO.getIp_address(), existingUser.getIp_address())) {
-                try {
-                    String subject = "Inicio de sesión desconocido";
-                    String verification_code = resourcesBank.generateRandomCode();
-                    existingUser.setVerification_code(verification_code);
-                    String email_content =
-                            "<!DOCTYPE html>" +
-                                    "<html>" +
-                                    "<head>" +
-                                    "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
-                                    "</head>" +
-                                    "<body>" +
-                                    "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
-                                    "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
-                                    "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>n nuevo inicio de sesion desde <span style='color: #B6E72B;'>\'" + userDTO.getIp_address() + "\'</span></h1>" +
-                                    "        <p style='color: #ffffff; font-size: 20px;'>Si fuiste tu este es tu codigo de confirmacion: <span style='color: #B6E72B;'>\'" + verification_code + "\'</span></p>" +
-                                    "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
-                                    "    </div>" +
-                                    "</body>" +
-                                    "</html>";
-
-                } catch (Exception e) {
-                    return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
-                }
             }
 
             // Generar el token por el id del usuario

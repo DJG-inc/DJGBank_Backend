@@ -45,14 +45,11 @@ public class UserModel {
     @Column(name = "status", nullable = false, length = 100)
     private String status = "pending";
 
-    @Column(name = "ip_address", nullable = false, length = 100)
-    private String ip_address;
+    @Column(name = "verification_code", nullable = true, length = 100)
+    private String verification_code;
 
     @Transient
     private String token;
-
-    @Transient
-    private String verification_code;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<LoanModel> loans;
@@ -62,5 +59,8 @@ public class UserModel {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private SavingsAccountModel savings_account;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<IpAdressModel> ip_adresses;
 
 }
