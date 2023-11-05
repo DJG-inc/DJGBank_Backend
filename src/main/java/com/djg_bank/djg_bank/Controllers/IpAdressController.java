@@ -28,10 +28,11 @@ public class IpAdressController {
         }
     }
 
-    @PostMapping("/verify/{ip}")
-    public ResponseEntity<?> verifyIp(@PathVariable String ip) {
+    @PostMapping("/verifyIp/{userId}")
+    public ResponseEntity<?> verifyIp(@PathVariable Long userId, @RequestBody Map<String, String> requestBody) {
         try {
-            return ipAdressService.verifyIp(ip);
+            String ip = requestBody.get("ip");
+            return ipAdressService.verifyIp(userId, ip);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al verificar la direccion ip");
         }

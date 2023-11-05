@@ -73,50 +73,51 @@ public class IpAdressService implements IipAdressService {
     }
 
     @Override
-    //verifica que si la ip que se le pasa por parametro es la misma que la que esta registrada en la base de datos
-    public ResponseEntity<?> verifyIp(String ip) {
+    public ResponseEntity<?> verifyIp(Long userId, String ip) {
         try {
-            // Buscar la IP en la base de datos
-            IpAdressModel ipAdress = this.ipAdressRepository.findByIp(ip);
-            if (ipAdress == null) {
-                return new ResponseEntity<>(new ErrorResponse("La IP no está registrada"), HttpStatus.BAD_REQUEST);
+            // Buscar la IP en la base de datos del usuario
+            UserModel user = this.userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
-            // Verificar que la IP sea la misma que la registrada en la base de datos
+            // Verificar que la IP sea la misma
+            IpAdressModel ipAdress = this.ipAdressRepository.findByUser(user);
+            if (ipAdress == null) {
+                return new ResponseEntity<>(new ErrorResponse("El usuario no tiene una IP registrada"), HttpStatus.BAD_REQUEST);
+            }
+
             if (!bcrypt.passwordEncoder().matches(ip, ipAdress.getIp())) {
                 // Si no es la misma, enviar un correo al usuario
                 try {
                     String subject = "Inicio de sesión desconocido";
                     String verification_code = resourcesBank.generateRandomCode();
                     String email_content =
-                            "<!DOCTYPE html>" +
+                            "<! DOCTYPE html>" +
                                     "<html>" +
                                     "<head>" +
-                                    "    <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
+                                    " <link href=\"https://fonts.googleapis.com/css2?family=Goldman&display=swap\" rel=\"stylesheet\">" +
                                     "</head>" +
                                     "<body>" +
-                                    "    <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;'>" +
-                                    "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
-                                    "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>n nuevo inicio de sesion desde <span style='color: #B6E72B;'>\'" + ip + "\'</span></h1>" +
-                                    "        <p style='color: #ffffff; font-size: 20px;'>Si fuiste tu este es tu codigo de confirmacion: <span style='color: #B6E72B;'>\'" + verification_code + "\'</span></p>" + "<p style='color: #ffffff; font-size: 20px;'>Si no fuiste tu, cambia tu contraseña inmediatamente</p>" +
-                                    "        <a href=\"http://localhost:5173/verifyCode/" + ipAdress.getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;'>Verificar</a>" +
-                                    "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
-                                    "    </div>" +
+                                    " <div style='background-color: #191A15; font-family: Goldman, sans-serif; text-align: center; color: #ffffff; padding: 20px; width: 100%;' >" +
+                                    " <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;' >" +
+                                    " <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;' >nuevo inicio de sesion desde <span style='color: #B6E72B;' >\'" + ip + "\'</span></h1>" +
+                                    " <p style='color: #ffffff; font-size: 20px;' >Si fuiste tu este es tu codigo de confirmacion: <span style='color: #B6E72B;' >\'" + verification_code + "\'</span></p>" + "<p style='color: #ffffff; font-size: 20px;' >Si no fuiste tu, cambia tu contraseña inmediatamente</p>" +
+                                    " <a href=\"http://localhost:5173/verifyCode/" + ipAdress.getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;' >Verificar</a>" +
+                                    " <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;' >Bank <span style='color: #B6E72B;' >easy</span>, bank <span style='color: #B6E72B;' >DJG</span>.</h2>" +
+                                    " </div>" +
                                     "</body>" +
                                     "</html>";
-
-                    emailService.sendEmail(ipAdress.getUser().getEmail(), subject, email_content);
-                    ipAdress.getUser().setVerification_code(verification_code);
-                    userRepository.save(ipAdress.getUser());
-
-                    return new ResponseEntity<>(new ErrorResponse("Se ha enviado un correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
+                    emailService.sendEmail(user.getEmail(), subject, email_content);
+                    user.setVerification_code(verification_code);
+                    userRepository.save(user);
 
                 } catch (Exception e) {
-                    return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo electrónico de confirmación"), HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo"), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
-            // Retornar la IP
-            return new ResponseEntity<>(ipAdress, HttpStatus.OK);
+
+            return new ResponseEntity<>("Código de verificación enviado con éxito", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ErrorResponse("Error al verificar la IP"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -141,6 +142,10 @@ public class IpAdressService implements IipAdressService {
             if (ipAdress != null) {
                 return new ResponseEntity<>(new ErrorResponse("La nueva IP ya está registrada"), HttpStatus.BAD_REQUEST);
             }
+
+            //hashear la ip
+            String ipHashed = bcrypt.passwordEncoder().encode(newIp);
+            newIp = ipHashed;
 
             // Crear un nuevo objeto IpAdressModel
             IpAdressModel newIpAdress = new IpAdressModel();

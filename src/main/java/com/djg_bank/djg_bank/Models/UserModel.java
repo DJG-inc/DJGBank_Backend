@@ -63,4 +63,5 @@ public class UserModel {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<IpAdressModel> ip_adresses;
 
+
 }
