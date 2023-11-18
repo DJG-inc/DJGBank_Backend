@@ -19,20 +19,27 @@ public class LoanController {
         this.jwtUtils = jwtUtils;
     }
 
-    //falta poner la verificacion del token
     @PostMapping("/create/{id}")
-    public ResponseEntity<?> create(@PathVariable Long id, @RequestBody LoanDTO loanDTO) {
+    public ResponseEntity<?> create(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody LoanDTO loanDTO) {
         try {
-            return loanService.save(id, loanDTO);
+            if (jwtUtils.validateJwtToken(token)) {
+                return loanService.save(id, loanDTO);
+            } else {
+                return ResponseEntity.badRequest().body("Error al crear el préstamo");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear el préstamo");
         }
     }
 
     @PostMapping("/pay/{id}")
-    public ResponseEntity<?> pay(@PathVariable Long id, @RequestBody Long loanId) {
+    public ResponseEntity<?> pay(@RequestHeader("Authorization") String tokenString, @PathVariable Long id, @RequestBody Long loanId) {
         try {
-            return loanService.payLoan(id, loanId);
+            if (jwtUtils.validateJwtToken(tokenString)) {
+                return loanService.payLoan(id, loanId);
+            } else {
+                return ResponseEntity.badRequest().body("Error al pagar el préstamo");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al pagar el préstamo");
         }

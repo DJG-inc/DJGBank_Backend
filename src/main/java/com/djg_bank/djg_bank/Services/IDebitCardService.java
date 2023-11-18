@@ -4,4 +4,5 @@ import org.springframework.http.ResponseEntity;
 
 public interface IDebitCardService {
     ResponseEntity<?> createDebitCard(Long id, String card_type);
+    ResponseEntity<?> deleteDebitCard(Long id);
 }

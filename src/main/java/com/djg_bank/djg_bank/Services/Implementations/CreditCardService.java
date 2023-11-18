@@ -100,4 +100,41 @@ public class CreditCardService implements ICreditCardService {
         }
     }
 
+    @Override
+    public ResponseEntity<?> deleteCreditCard(Long id) {
+        try {
+            // Buscar la tarjeta de crédito por su ID
+            CreditCardModel creditCard = this.creditCardRepository.findById(id).orElse(null);
+            if (creditCard == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una tarjeta de crédito con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            //verificar que la tarjeta de credito no tenga deuda
+            if(creditCard.getCurrent_debt() > 0){
+                return new ResponseEntity<>(new ErrorResponse("La tarjeta de crédito tiene deuda"), HttpStatus.BAD_REQUEST);
+            }
+
+            long user_id = creditCard.getUser().getId();
+
+            // Buscar el usuario por su ID
+            UserModel user = this.userRepository.findById(user_id).orElse(null);
+            if (user == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Eliminar la tarjeta de crédito del usuario
+            user.getCredit_cards().remove(creditCard);
+
+            // Eliminar la tarjeta de crédito de la base de datos
+            this.creditCardRepository.delete(creditCard);
+
+            // Retornar la tarjeta de crédito eliminada
+            return new ResponseEntity<>(creditCard, HttpStatus.OK);
+        } catch (Exception error) {
+            // Manejar errores y retornar una respuesta apropiada
+            System.out.println(error);
+            return new ResponseEntity<>(new ErrorResponse("Error al eliminar la tarjeta de crédito"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }

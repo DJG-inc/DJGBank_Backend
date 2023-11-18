@@ -21,11 +21,15 @@ public class TransactionsController {
     }
 
     @PostMapping("/create/{id}")
-    public ResponseEntity<?> create(@PathVariable Long id, @RequestBody TransactionsDTO transactionsDTO) {
+    public ResponseEntity<?> create(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody TransactionsDTO transactionsDTO) {
         try {
-            return transactionsService.createTransaction(id, transactionsDTO);
+            if (jwtUtils.validateJwtToken(token)) {
+                return transactionsService.createTransaction(id, transactionsDTO);
+            } else {
+                return ResponseEntity.badRequest().body("Error al crear la transacción");
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al crear la transaccion");
+            return ResponseEntity.badRequest().body("Error al crear la transacción");
         }
     }
 }

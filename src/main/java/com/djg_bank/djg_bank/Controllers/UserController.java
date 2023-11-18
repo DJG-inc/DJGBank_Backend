@@ -73,9 +73,13 @@ public class  UserController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> findAll( String token) {
+    public ResponseEntity<?> findAll(@RequestHeader("Authorization") String token) {
         try {
-            return userService.findAll();
+            if (jwtUtils.validateJwtToken(token)) {
+                return userService.findAll();
+            } else {
+                return ResponseEntity.badRequest().body("Token no válido");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al obtener los usuarios");
         }

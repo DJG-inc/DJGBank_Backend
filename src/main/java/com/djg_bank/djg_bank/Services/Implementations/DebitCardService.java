@@ -109,4 +109,36 @@ public class DebitCardService implements IDebitCardService {
         }
     }
 
+    @Override
+    public ResponseEntity<?> deleteDebitCard(Long id) {
+        try {
+            // Buscar la tarjeta de débito por su ID
+            DebitCardsModel debitCard = this.debitCardRepository.findById(id).orElse(null);
+            if (debitCard == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una tarjeta de débito con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            long account_id = debitCard.getSavings_account().getId();
+
+            // Buscar la cuenta de ahorros por su ID
+            SavingsAccountModel savingsAccount = this.savingsAccountRepository.findById(account_id).orElse(null);
+            if (savingsAccount == null) {
+                return new ResponseEntity<>(new ErrorResponse("No existe una cuenta de ahorros con ese ID"), HttpStatus.BAD_REQUEST);
+            }
+
+            // Eliminar la tarjeta de débito de la cuenta de ahorros
+            savingsAccount.getDebit_cards().remove(debitCard);
+            this.savingsAccountRepository.save(savingsAccount);
+
+            // Eliminar la tarjeta de débito de la base de datos
+            this.debitCardRepository.delete(debitCard);
+
+            // Retornar un mensaje de éxito
+            return new ResponseEntity<>("Tarjeta de débito eliminada exitosamente", HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.printf("Error al eliminar la tarjeta de débito: %s\n", e.getMessage());
+            return new ResponseEntity<>(new ErrorResponse("Error al eliminar la tarjeta de débito"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

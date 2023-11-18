@@ -21,14 +21,30 @@ public class CreditCardController {
         this.jwtUtils = jwtUtils;
     }
 
-    //falta poner la verificacion del token
     @PostMapping("/create/{id}")
-    public ResponseEntity<?> create(@PathVariable Long id, @RequestBody Map<String, String> requestBody) {
+    public ResponseEntity<?> create(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody Map<String, String> requestBody) {
         try {
-            String cardType = requestBody.get("cardType");
-            return creditCardService.createCreditCard(id, cardType);
+              if (jwtUtils.validateJwtToken(token)) {
+                String cardType = requestBody.get("cardType");
+                return creditCardService.createCreditCard(id, cardType);
+              } else {
+                return ResponseEntity.badRequest().body("Error al crear la tarjeta de crédito");
+              }
+          } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Error al crear la tarjeta de crédito");
+          }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        try {
+            if (jwtUtils.validateJwtToken(token)) {
+                return creditCardService.deleteCreditCard(id);
+            } else {
+                return ResponseEntity.badRequest().body("Error al eliminar la tarjeta de crédito");
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al crear la tarjeta de crédito");
+            return ResponseEntity.badRequest().body("Error al eliminar la tarjeta de crédito");
         }
     }
 

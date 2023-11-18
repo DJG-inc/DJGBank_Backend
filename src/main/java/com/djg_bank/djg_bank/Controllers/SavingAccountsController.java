@@ -20,11 +20,14 @@ public class SavingAccountsController {
         this.jwtUtils = jwtUtils;
     }
 
-    //falta poner la verificacion del token
     @PostMapping("/create/{id}")
-    public ResponseEntity<?> create(@PathVariable Long id, @RequestBody SavingsAccountDTO savingsAccountDTO) {
+    public ResponseEntity<?> create(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody SavingsAccountDTO savingsAccountDTO) {
         try {
-            return savingAccountsService.createSavingAccount(id, savingsAccountDTO);
+            if (jwtUtils.validateJwtToken(token)) {
+                return savingAccountsService.createSavingAccount(id, savingsAccountDTO);
+            } else {
+                return ResponseEntity.badRequest().body("Error al crear la cuenta de ahorros");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear la cuenta de ahorros");
         }

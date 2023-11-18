@@ -18,11 +18,14 @@ public class CreditCardActivityController {
         this.jwtUtils = jwtUtils;
     }
 
-    //falta poner la verificacion del token
     @PostMapping("/create/{id}")
-    public ResponseEntity<?> create(@PathVariable Long id, @RequestBody CreditCardActivityDTO creditCardActivityDTO) {
+    public ResponseEntity<?> create(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody CreditCardActivityDTO creditCardActivityDTO) {
         try {
-            return creditCardActivityService.createCreditCardActivity(id, creditCardActivityDTO);
+            if (jwtUtils.validateJwtToken(token)) {
+                return creditCardActivityService.createCreditCardActivity(id, creditCardActivityDTO);
+            } else {
+                return ResponseEntity.badRequest().body("Error al crear la actividad de la tarjeta de crédito");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error al crear la actividad de la tarjeta de crédito");
         }
