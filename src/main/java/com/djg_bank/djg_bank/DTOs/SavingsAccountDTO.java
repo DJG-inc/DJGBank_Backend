@@ -1,15 +1,13 @@
 package com.djg_bank.djg_bank.DTOs;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @ToString
 

@@ -74,7 +74,17 @@ public class UserService implements IUserService {
 
             // Hash de la contraseña
             String password = userDTO.getPassword();
-            String passwordBcrypt = bcrypt.passwordEncoder().encode(password);
+
+            String passwordBcrypt;
+            try {
+                passwordBcrypt = bcrypt.passwordEncoder().encode(password);
+            } catch (Exception e) {
+                // Log the exception or print its message to understand why it's being thrown
+                e.printStackTrace();
+                // Handle the exception appropriately or rethrow it
+                throw new RuntimeException("Exception when encoding password", e);
+            }
+
             userDTO.setPassword(passwordBcrypt);
 
             // Guardar el usuario
@@ -139,7 +149,7 @@ public class UserService implements IUserService {
             userToUpdate.setToken(encodeToken);
 
             // Guardar los cambios en el usuario existente
-            UserModel updatedUser = userRepository.save(userToUpdate);
+            userRepository.save(userToUpdate);
 
             // Enviar correo de confirmacion
             try {
