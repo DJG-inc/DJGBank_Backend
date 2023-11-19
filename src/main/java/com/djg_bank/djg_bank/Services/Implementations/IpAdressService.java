@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class IpAdressService implements IipAdressService {
 
@@ -44,14 +46,14 @@ public class IpAdressService implements IipAdressService {
             }
 
             // Verificar que el usuario no tenga una IP registrada
-            IpAdressModel ipAdress = this.ipAdressRepository.findByUser(user);
-            if (ipAdress != null) {
+            List<IpAdressModel> ipAdressList = this.ipAdressRepository.findByUser(user);
+            if (!ipAdressList.isEmpty()) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario ya tiene una IP registrada"), HttpStatus.BAD_REQUEST);
             }
 
             // Verificar que la IP no esté registrada
-            IpAdressModel ipAdress2 = this.ipAdressRepository.findByIp(ipAdressDTO.getIp());
-            if (ipAdress2 != null) {
+            IpAdressModel ipAdress = this.ipAdressRepository.findByIp(ipAdressDTO.getIp());
+            if (ipAdress != null) {
                 return new ResponseEntity<>(new ErrorResponse("La IP ya está registrada"), HttpStatus.BAD_REQUEST);
             }
 
@@ -81,13 +83,23 @@ public class IpAdressService implements IipAdressService {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
             }
 
-            // Verificar que la IP sea la misma
-            IpAdressModel ipAdress = this.ipAdressRepository.findByUser(user);
-            if (ipAdress == null) {
+            // Verificar que el usuario tenga una IP registrada
+            List<IpAdressModel> ipAdressList = this.ipAdressRepository.findByUser(user);
+            if (ipAdressList.isEmpty()) {
                 return new ResponseEntity<>(new ErrorResponse("El usuario no tiene una IP registrada"), HttpStatus.BAD_REQUEST);
             }
 
-            if (!bcrypt.passwordEncoder().matches(ip, ipAdress.getIp())) {
+            //recorrer todas las ip del usuario y compararlas con la ip que se envia
+            boolean ipExist = false;
+            for (IpAdressModel ipAdressModel : ipAdressList) {
+                if (bcrypt.passwordEncoder().matches(ip, ipAdressModel.getIp())) {
+                    ipExist = true;
+                    break;
+                }
+            }
+
+            // Verificar que la IP sea la misma
+            if (!ipExist) {
                 // Si no es la misma, enviar un correo al usuario
                 try {
                     String subject = "Inicio de sesión desconocido";
@@ -103,7 +115,7 @@ public class IpAdressService implements IipAdressService {
                                     " <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;' >" +
                                     " <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;' >nuevo inicio de sesion desde <span style='color: #B6E72B;' >\'" + ip + "\'</span></h1>" +
                                     " <p style='color: #ffffff; font-size: 20px;' >Si fuiste tu este es tu codigo de confirmacion: <span style='color: #B6E72B;' >\'" + verification_code + "\'</span></p>" + "<p style='color: #ffffff; font-size: 20px;' >Si no fuiste tu, cambia tu contraseña inmediatamente</p>" +
-                                    " <a href=\"http://localhost:5173/verifyCode/" + ipAdress.getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;' >Verificar</a>" +
+                                    " <a href=\"http://localhost:5173/verifyCode/" + ipAdressList.get(0).getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;' >Verificar</a>" +
                                     " <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;' >Bank <span style='color: #B6E72B;' >easy</span>, bank <span style='color: #B6E72B;' >DJG</span>.</h2>" +
                                     " </div>" +
                                     "</body>" +
@@ -112,16 +124,20 @@ public class IpAdressService implements IipAdressService {
                     user.setVerification_code(verification_code);
                     userRepository.save(user);
 
+                    return new ResponseEntity<>("Se ha enviado un correo de verificación", HttpStatus.BAD_REQUEST);
+
                 } catch (Exception e) {
-                    return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo"), HttpStatus.INTERNAL_SERVER_ERROR);
+                    return new ResponseEntity<>(new ErrorResponse("Error al enviar el correo"), HttpStatus.BAD_REQUEST);
                 }
             }
 
-            return new ResponseEntity<>("Código de verificación enviado con éxito", HttpStatus.OK);
+            return new ResponseEntity<>("IP verificada con éxito", HttpStatus.OK);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(new ErrorResponse("Error al verificar la IP"), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @Override
     public ResponseEntity<?> addIpAndVerifyCode(Long userId, String newIp, String verificationCode) {
