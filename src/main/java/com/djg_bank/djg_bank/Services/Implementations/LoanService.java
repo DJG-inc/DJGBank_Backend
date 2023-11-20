@@ -64,12 +64,22 @@ public class LoanService implements ILoanService {
             //setear la fecha actual al loanDTO
             loanDTO.setStart_date(strDate);
 
+
+
             // Crear un nuevo préstamo y asignarle los datos
             LoanModel loanModel = loanMapper.toLoanModel(loanDTO);
             loanModel.setUser(user);
 
+//            Enviar el dinero del prestamo a la cuenta de ahorros del usuario
+            Double savingsBalance = user.getSavings_account().getBalance();
+            savingsBalance += loanModel.getAmount();
+            user.getSavings_account().setBalance(savingsBalance);
+
             // Guardar el préstamo en la base de datos
             LoanModel loanSaved = loanRepository.save(loanModel);
+
+//            Guardar la actualizacion de la cuenta de ahorros en la base de datos
+            userRepository.save(user);
 
             return new ResponseEntity<>(loanSaved, HttpStatus.OK);
         } catch (Exception e) {
