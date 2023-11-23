@@ -59,7 +59,6 @@ public class TransactionsService implements ITransactionsService {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese user_id"), HttpStatus.BAD_REQUEST);
             }
 
-            System.out.println(transactionsDTO.getNumber_of_savings_account());
             SavingsAccountModel savingsAccount_to_send = this.savingsAccountRepository.findByAccount_number(transactionsDTO.getNumber_of_savings_account()).orElse(null);
             System.out.println(savingsAccount_to_send);
             if (savingsAccount_to_send == null) {

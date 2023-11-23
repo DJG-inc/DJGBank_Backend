@@ -72,7 +72,7 @@ public class DebitCardServiceImplTest {
             setCreated_at("07/12/2001");
         }}));
 
-when(debitCardsMapper.toDebitCardsModel(any(DebitCardsDTO.class))).thenAnswer(invocation -> {
+        when(debitCardsMapper.toDebitCardsModel(any(DebitCardsDTO.class))).thenAnswer(invocation -> {
             DebitCardsDTO dto = invocation.getArgument(0);
             DebitCardsModel model = new DebitCardsModel();
             // Map fields from dto to model
@@ -110,9 +110,6 @@ when(debitCardsMapper.toDebitCardsModel(any(DebitCardsDTO.class))).thenAnswer(in
                     .cvv(debitCardsModel.getCvv())
                     .build();
         });
-
-
-
     }
 
     @Test
