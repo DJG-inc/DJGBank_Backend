@@ -2,7 +2,6 @@ package com.djg_bank.djg_bank.Security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -12,11 +11,11 @@ import java.util.Date;
 
 @Component
 public class JwtUtils {
+    private final Long jwtExpirationMs = 3600000L;
 
-    @Value("${jwt.expirationMs}")
-    private int jwtExpirationMs;
+    private String jwtSecret = "NX6RScZzYvduC8YktGexQ74FksuPa6h0xVdnvRzOztA=";
 
-    private final Key jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private final Key jwtSecretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
     public String generateJwtToken(Long id) {
         Date now = new Date();
@@ -51,4 +50,3 @@ public class JwtUtils {
         return false;
     }
 }
-

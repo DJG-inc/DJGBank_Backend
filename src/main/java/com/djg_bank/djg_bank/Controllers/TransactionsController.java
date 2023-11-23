@@ -4,7 +4,9 @@ import com.djg_bank.djg_bank.DTOs.TransactionsDTO;
 import com.djg_bank.djg_bank.Services.ITransactionsService;
 import com.djg_bank.djg_bank.Security.JwtUtils;
 import com.djg_bank.djg_bank.Services.Implementations.TransactionsService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,10 +28,11 @@ public class TransactionsController {
             if (jwtUtils.validateJwtToken(token)) {
                 return transactionsService.createTransaction(id, transactionsDTO);
             } else {
-                return ResponseEntity.badRequest().body("Error al crear la transacción");
+                return ResponseEntity.badRequest().body("Token inválido");
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al crear la transacción");
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

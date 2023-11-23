@@ -2,10 +2,7 @@ package com.djg_bank.djg_bank.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
@@ -38,5 +35,6 @@ public class TransactionsModel {
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
+    @ToString.Exclude
     private SavingsAccountModel savings_account;
 }

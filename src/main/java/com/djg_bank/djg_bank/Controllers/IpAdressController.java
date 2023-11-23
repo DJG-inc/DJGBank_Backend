@@ -47,5 +47,4 @@ public class IpAdressController {
             return ResponseEntity.badRequest().body("Error al verificar la direccion ip");
         }
     }
-
 }

@@ -37,8 +37,10 @@ public class SavingsAccountModel {
     private UserModel user;
 
     @OneToMany(mappedBy = "savings_account", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<DebitCardsModel> debit_cards;
 
     @OneToMany(mappedBy = "savings_account", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private List<TransactionsModel> transactions;
 }

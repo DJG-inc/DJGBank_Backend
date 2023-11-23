@@ -40,8 +40,6 @@ public class TransactionsService implements ITransactionsService {
     @Override
     public ResponseEntity<?> createTransaction(Long id, TransactionsDTO transactionsDTO) {
         try {
-            System.out.println(transactionsDTO);
-
             UserModel user = this.userRepository.findById(id).orElse(null);
             if (user == null) {
                 return new ResponseEntity<>(new ErrorResponse("No existe un usuario con ese ID"), HttpStatus.BAD_REQUEST);
@@ -103,6 +101,7 @@ public class TransactionsService implements ITransactionsService {
             return new ResponseEntity<>(transactionsDTO, HttpStatus.CREATED);
 
         } catch (Exception e) {
+            e.printStackTrace();
             return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

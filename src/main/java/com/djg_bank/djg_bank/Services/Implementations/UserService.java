@@ -111,7 +111,7 @@ public class UserService implements IUserService {
     }
 
     private static String getConfirmContent(String token) {
-        String confirmation_url = "http://localhost:5173/confirm-email/" + token;
+        String confirmation_url = "https://djgbank.netlify.app/confirm-email/" + token;
         return "<!DOCTYPE html>" +
                         "<html>" +
                         "<head>" +
@@ -212,7 +212,7 @@ public class UserService implements IUserService {
                                 "        <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;'>" +
                                 "        <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;'>Has empezado tu vida económica con los <span style='color: #B6E72B;'>mejores</span></h1>" +
                                 "        <p style='color: #ffffff; font-size: 20px;'>Bienvenido, nos alegra tenerte con nosotros, lo que sigue ahora es terminar tu registro, porfavor ingresa a la siguiente dirección:</p>" +
-                                "        <a href=\"http://localhost:5173/login\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Iniciar sesión</a>" +
+                                "        <a href=\"hhttps://djgbank.netlify.app/login\" style='color: #B6E72B; font-size: 20px; text-decoration: none;'>Iniciar sesión</a>" +
                                 "        <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;'>Bank <span style='color: #B6E72B;'>easy</span>, bank <span style='color: #B6E72B;'>DJG</span>.</h2>" +
                                 "    </div>" +
                                 "</body>" +
@@ -422,7 +422,7 @@ public class UserService implements IUserService {
     }
 
     private static String getResetContent(String token) {
-        String reset_url = "http://localhost:5173/reset-password/" + token;
+        String reset_url = "https://djgbank.netlify.app/reset-password/" + token;
         return "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +

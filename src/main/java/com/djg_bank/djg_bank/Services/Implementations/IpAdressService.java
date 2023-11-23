@@ -115,7 +115,7 @@ public class IpAdressService implements IipAdressService {
                                     " <img src=\"https://www.dropbox.com/scl/fi/2nqt4izlkkc7il74un235/Group-1.png?rlkey=7n6wz5zp54xs0lavohntrso4h&raw=1\" alt=\"Descripción de la imagen\" style='max-width: 100%; height: auto;' >" +
                                     " <h1 style='color: #ffffff; font-size: 5vw; margin: 20px 0;' >nuevo inicio de sesion desde <span style='color: #B6E72B;' >\'" + ip + "\'</span></h1>" +
                                     " <p style='color: #ffffff; font-size: 20px;' >Si fuiste tu este es tu codigo de confirmacion: <span style='color: #B6E72B;' >\'" + verification_code + "\'</span></p>" + "<p style='color: #ffffff; font-size: 20px;' >Si no fuiste tu, cambia tu contraseña inmediatamente</p>" +
-                                    " <a href=\"http://localhost:5173/verifyCode/" + ipAdressList.get(0).getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;' >Verificar</a>" +
+                                    " <a href=\"https://djgbank.netlify.app/verifyCode/" + ipAdressList.get(0).getUser().getId() + "/" + verification_code + "\" style='color: #B6E72B; font-size: 20px;' >Verificar</a>" +
                                     " <h2 style='color: #ffffff; font-size: 4vw; margin: 20px 0;' >Bank <span style='color: #B6E72B;' >easy</span>, bank <span style='color: #B6E72B;' >DJG</span>.</h2>" +
                                     " </div>" +
                                     "</body>" +
