@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for djgbank-backend-blue-meadow-1492-icy-rain-603 on 2023-11-23T14:02:59-05:00
+# fly.toml app configuration file generated for djgbank-backend on 2023-11-23T23:03:49-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "djgbank-backend-blue-meadow-1492-icy-rain-603"
+app = "djgbank-backend"
 primary_region = "bog"
 
 [build]
